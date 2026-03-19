@@ -4910,321 +4910,424 @@ function printPO(id) {
 <title>${po.id} — ${isApproved?'Purchase Order':'DRAFT Purchase Order'}</title>
 <style>
   *{margin:0;padding:0;box-sizing:border-box}
-  body{font-family:'Arial',sans-serif;font-size:11px;color:#111;background:#fff}
-  @page{size:A4;margin:14mm 14mm 18mm 14mm}
+
+  /* ── A4 print setup ──────────────────────────────────── */
+  @page{
+    size:A4 portrait;
+    margin:12mm 10mm 14mm 10mm;
+  }
   @media print{
+    html,body{width:210mm;height:297mm}
     .no-print{display:none!important}
-    body{font-size:10.5px}
-    .page-break{page-break-before:always}
+    .wrapper{width:100%;max-width:100%;padding:0;box-shadow:none}
+    .doc{border:none}
+    .doc-head{border-bottom:2px solid #1a1a2e!important}
+    body{font-size:9pt;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    table.items th{background:#1a1a2e!important;color:#fff!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .watermark-bar{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    tr{page-break-inside:avoid}
   }
 
-  /* ---- Draft watermark ---- */
+  /* ── Base ─────────────────────────────────────────────── */
+  body{font-family:'Arial',sans-serif;font-size:10px;color:#111;background:#f5f5f5;line-height:1.4}
+
+  /* ── Draft watermark ───────────────────────────────────── */
   ${isDraft?`
-  body::before{
+  .doc::before{
     content:'${po.status.toUpperCase()}';
-    position:fixed;top:50%;left:50%;
+    position:absolute;top:50%;left:50%;
     transform:translate(-50%,-50%) rotate(-35deg);
-    font-size:110px;font-weight:900;
-    color:rgba(180,30,30,0.08);
+    font-size:100px;font-weight:900;
+    color:rgba(180,30,30,0.06);
     pointer-events:none;z-index:0;letter-spacing:8px;
     white-space:nowrap;
   }`:''}
 
-  .wrapper{max-width:780px;margin:0 auto;padding:10px 0;position:relative;z-index:1}
+  /* ── Wrapper ───────────────────────────────────────────── */
+  .wrapper{
+    width:190mm;
+    max-width:720px;
+    margin:0 auto;
+    padding:8px 0 16px;
+  }
 
-  /* Top action bar */
-  .action-bar{background:#0f172a;color:#fff;padding:10px 20px;display:flex;align-items:center;justify-content:space-between;border-radius:8px;margin-bottom:18px}
-  .action-bar h2{font-size:14px;font-weight:700;letter-spacing:-0.3px}
-  .action-bar .pills{display:flex;gap:8px;align-items:center}
-  .pill{padding:5px 14px;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;border:none;font-family:Arial,sans-serif}
+  /* ── Screen-only action bar ────────────────────────────── */
+  .action-bar{
+    background:#0f172a;color:#fff;
+    padding:10px 16px;
+    display:flex;align-items:center;justify-content:space-between;
+    border-radius:8px;margin-bottom:14px;
+  }
+  .action-bar h2{font-size:13px;font-weight:700}
+  .pill{padding:6px 16px;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;border:none;font-family:Arial,sans-serif}
   .pill-print{background:#22c55e;color:#fff}
   .pill-close{background:#475569;color:#fff}
-  .pill-dl{background:#3b82f6;color:#fff}
-  ${isDraft?'.status-pill{background:#fef3c7;color:#92400e;padding:4px 12px;border-radius:20px;font-size:11.5px;font-weight:700}':
-            '.status-pill{background:#dcfce7;color:#065f46;padding:4px 12px;border-radius:20px;font-size:11.5px;font-weight:700}'}
+  ${isDraft?'.status-pill{background:#fef3c7;color:#92400e;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700}':
+            '.status-pill{background:#dcfce7;color:#065f46;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700}'}
 
-  /* Document */
-  .doc{border:1px solid #ccc;padding:0;background:#fff}
-  .doc-head{padding:14px 18px 10px;border-bottom:2px solid #1a1a2e;display:flex;align-items:flex-start;justify-content:space-between}
-  .doc-head .left small{font-size:9.5px;color:#555;display:block;margin-bottom:2px}
-  .doc-head .left b{font-size:12px;color:#1a1a2e}
-  .logo-box{display:flex;flex-direction:column;align-items:flex-end;gap:4px}
-  .logo-text{font-size:22px;font-weight:900;color:#1a1a2e;letter-spacing:-1px}
-  .logo-sub{font-size:9px;color:#64748b;letter-spacing:2px;text-transform:uppercase}
+  /* ── Document shell ─────────────────────────────────────── */
+  .doc{
+    background:#fff;
+    border:1px solid #bbb;
+    position:relative;
+    overflow:hidden;
+    box-shadow:0 2px 12px rgba(0,0,0,0.1);
+  }
 
-  .po-title-bar{text-align:center;padding:8px 0;font-size:16px;font-weight:900;letter-spacing:1px;text-decoration:underline;border-bottom:1px solid #e2e8f0;background:#fafafa}
-  ${isDraft?'.po-title-bar{color:#b91c1c}':`  `}
+  /* ── Status ribbon ──────────────────────────────────────── */
+  .ribbon{
+    text-align:center;padding:4px 0;font-size:8.5px;font-weight:800;
+    letter-spacing:1.5px;text-transform:uppercase;
+    ${isDraft
+      ? 'background:#fef3c7;color:#92400e;border-bottom:2px solid #f59e0b;'
+      : 'background:#dcfce7;color:#065f46;border-bottom:2px solid #10b981;'}
+  }
 
-  .addr-row{display:grid;grid-template-columns:1fr 1fr;gap:0;border-bottom:1px solid #ddd}
-  .addr-cell{padding:10px 14px;font-size:10.5px;line-height:1.6}
+  /* ── Header ─────────────────────────────────────────────── */
+  .doc-head{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:10px 14px 8px;
+    border-bottom:2.5px solid #1a1a2e;
+    gap:10px;
+  }
+  .doc-head .buyer-info{flex:1}
+  .doc-head .buyer-name{font-size:12px;font-weight:900;color:#1a1a2e;letter-spacing:-0.3px}
+  .doc-head .buyer-addr{font-size:8.5px;color:#555;line-height:1.5;margin-top:2px}
+  .doc-head .buyer-gstin{font-size:8.5px;font-weight:700;color:#1d4ed8;margin-top:3px}
+  .logo-zone{display:flex;flex-direction:column;align-items:flex-end;gap:3px}
+  .logo-tagline{font-size:7.5px;color:#94a3b8;letter-spacing:1.5px;text-transform:uppercase;text-align:right}
+
+  /* ── PO Title bar ───────────────────────────────────────── */
+  .po-title{
+    text-align:center;padding:5px 0;
+    font-size:13px;font-weight:900;letter-spacing:1.5px;
+    text-decoration:underline;text-transform:uppercase;
+    background:#f8fafc;border-bottom:1px solid #ddd;
+    ${isDraft?'color:#b91c1c':'color:#0f172a'}
+  }
+
+  /* ── PO Meta strip ──────────────────────────────────────── */
+  .po-meta{
+    display:grid;grid-template-columns:repeat(4,1fr);
+    border-bottom:1px solid #ddd;
+    font-size:9px;
+  }
+  .po-meta-cell{
+    padding:6px 10px;border-right:1px solid #e5e7eb;
+  }
+  .po-meta-cell:last-child{border-right:none}
+  .po-meta-cell .label{font-size:7.5px;color:#9ca3af;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2px}
+  .po-meta-cell .value{font-weight:700;color:#1a1a2e;font-size:9.5px}
+
+  /* ── Address row ────────────────────────────────────────── */
+  .addr-row{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid #ddd}
+  .addr-cell{padding:8px 12px;font-size:9.5px;line-height:1.6}
   .addr-cell:first-child{border-right:1px solid #ddd}
-  .addr-cell b{display:block;font-size:10px;color:#555;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px}
+  .addr-cell .label{font-size:8px;font-weight:800;color:#9ca3af;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:3px}
 
-  .vendor-detail-row{padding:8px 14px;background:#f8fafc;border-bottom:1px solid #ddd;font-size:10.5px;line-height:1.8}
-  .vendor-detail-row .vd-grid{display:flex;flex-wrap:wrap;gap:0 30px}
-  .vendor-detail-row span{color:#555;font-size:10px;text-transform:uppercase;letter-spacing:0.4px}
+  /* ── Vendor details strip ───────────────────────────────── */
+  .vd-strip{
+    display:grid;grid-template-columns:repeat(4,1fr);
+    padding:5px 12px;background:#f8fafc;
+    border-bottom:1px solid #ddd;font-size:8.5px;gap:4px;
+  }
+  .vd-strip div .lbl{color:#9ca3af;font-size:7.5px;text-transform:uppercase;letter-spacing:0.4px;display:block;margin-bottom:1px}
+  .vd-strip div .val{font-weight:700;color:#1a1a2e}
 
-  .billing-section{padding:10px 14px;border-bottom:1px solid #ddd}
-  .section-title{font-size:11px;font-weight:900;margin-bottom:6px;text-decoration:underline;text-transform:uppercase;letter-spacing:0.4px;color:#1a1a2e}
-  .billing-grid{display:grid;grid-template-columns:160px 1fr;row-gap:3px;font-size:10.5px}
-  .billing-grid .lbl{color:#444;padding-right:6px}
-  .billing-grid .val{font-weight:600}
+  /* ── Section header ─────────────────────────────────────── */
+  .sec-hdr{
+    padding:5px 12px;background:#f1f5f9;border-bottom:1px solid #ddd;
+    font-size:8px;font-weight:800;color:#475569;text-transform:uppercase;letter-spacing:0.8px;
+  }
 
-  table.items{width:100%;border-collapse:collapse;font-size:10.5px}
-  table.items th{background:#1a1a2e;color:#fff;padding:6px 8px;text-align:left;font-size:10px;font-weight:700;white-space:nowrap}
-  table.items th.r, table.items td.r{text-align:right}
-  table.items td{padding:7px 8px;border-bottom:1px solid #e2e8f0;vertical-align:top;line-height:1.5}
+  /* ── Line items table ───────────────────────────────────── */
+  table.items{width:100%;border-collapse:collapse;font-size:9px}
+  table.items thead tr{background:#1a1a2e}
+  table.items th{
+    padding:5px 7px;text-align:left;font-size:8px;font-weight:700;
+    color:#fff;white-space:nowrap;border-right:1px solid #334155;
+  }
+  table.items th:last-child{border-right:none}
+  table.items th.r,table.items td.r{text-align:right}
+  table.items td{
+    padding:5px 7px;border-bottom:1px solid #e5e7eb;
+    vertical-align:top;line-height:1.4;border-right:1px solid #f1f5f9;
+  }
+  table.items td:last-child{border-right:none}
   table.items tr:nth-child(even) td{background:#fafafa}
-  table.items .desc-main{font-weight:700;font-size:10.5px}
-  table.items .desc-sub{color:#555;font-size:9.5px;margin-top:2px}
-  table.items .tax-info{font-size:9.5px;color:#1d4ed8;margin-top:2px}
+  .desc-main{font-weight:700;font-size:9px}
+  .desc-sub{color:#6b7280;font-size:8px;margin-top:1px}
+  .tax-info{font-size:8px;color:#1d4ed8;margin-top:2px}
 
-  .tax-row{display:flex;justify-content:flex-end;padding:6px 14px;border-bottom:1px solid #e2e8f0;font-size:10.5px;gap:40px}
-  .tax-row .tax-label{color:#555;min-width:120px;text-align:right}
-  .tax-row .tax-val{min-width:80px;text-align:right;font-weight:600}
+  /* ── Tax summary ────────────────────────────────────────── */
+  .tax-block{border-top:1px solid #e5e7eb}
+  .tax-row{
+    display:flex;justify-content:flex-end;
+    padding:4px 14px;border-bottom:1px solid #f1f5f9;font-size:9.5px;gap:0;
+  }
+  .tax-lbl{color:#555;width:200px;text-align:right;padding-right:14px}
+  .tax-val{width:100px;text-align:right;font-weight:600;font-family:'Courier New',monospace}
+  .grand-row{
+    display:flex;justify-content:flex-end;
+    padding:6px 14px;border-top:2px solid #1a1a2e;border-bottom:1px solid #1a1a2e;
+    background:#eff6ff;font-size:11px;font-weight:900;
+  }
+  .grand-row .tax-lbl{width:200px;text-align:right;padding-right:14px;color:#1a1a2e}
+  .grand-row .tax-val{width:100px;text-align:right;color:#1d4ed8;font-family:'Courier New',monospace}
 
-  .grand-total-row{display:flex;justify-content:flex-end;padding:7px 14px;border-bottom:2px solid #1a1a2e;background:#f0f9ff;font-size:12px;font-weight:900;gap:40px}
-  .grand-total-row .tax-label{min-width:120px;text-align:right}
-  .grand-total-row .tax-val{min-width:80px;text-align:right;color:#1d4ed8}
+  /* ── Amount in words ────────────────────────────────────── */
+  .amt-words{
+    padding:5px 14px;background:#fffbeb;
+    border-bottom:1px solid #fde68a;font-size:9px;font-style:italic;
+  }
+  .amt-words b{font-style:normal;font-size:8.5px;color:#92400e;text-transform:uppercase;letter-spacing:0.3px}
 
-  .amt-words{padding:7px 14px;background:#fffbeb;border-bottom:1px solid #ddd;font-size:10.5px;font-style:italic}
-  .amt-words b{font-style:normal}
+  /* ── Terms ──────────────────────────────────────────────── */
+  .terms{padding:8px 12px;border-bottom:1px solid #ddd;font-size:9px}
+  .terms-grid{display:grid;grid-template-columns:130px 1fr;row-gap:4px}
+  .terms-grid .lbl{color:#555;font-weight:700;padding-right:8px;font-size:8.5px}
+  .terms-grid .val{color:#333;line-height:1.5}
 
-  .terms-section{padding:10px 14px;border-bottom:1px solid #ddd;font-size:10.5px}
-  .terms-grid{display:grid;grid-template-columns:160px 1fr;row-gap:5px}
-  .terms-grid .lbl{color:#555;font-weight:700}
+  /* ── T&C ────────────────────────────────────────────────── */
+  .tnc{padding:6px 12px;border-bottom:1px solid #ddd;font-size:8.5px;color:#444;line-height:1.6}
 
-  .annex-section{padding:10px 14px;border-bottom:1px solid #ddd;font-size:10.5px}
+  /* ── Annexure ───────────────────────────────────────────── */
+  .annexure{padding:6px 12px;border-bottom:1px solid #ddd;font-size:8.5px}
+  .annexure-grid{display:grid;grid-template-columns:160px 1fr;gap:6px;margin-top:4px}
 
-  .footer-sign{padding:12px 14px;display:grid;grid-template-columns:1fr 1fr;gap:10px}
-  .sign-box{text-align:right}
-  .sign-box .for{font-size:9.5px;color:#555}
-  .sign-box .company{font-size:11px;font-weight:900;color:#1a1a2e}
-  .sign-box .note{font-size:9px;color:#888;margin-top:6px}
+  /* ── Signature bar ──────────────────────────────────────── */
+  .sig-bar{
+    display:grid;grid-template-columns:1fr 1fr;
+    padding:10px 14px;border-top:1px solid #e5e7eb;
+    background:#fafafa;
+  }
+  .sig-left{font-size:8.5px;color:#555;line-height:1.7}
+  .sig-right{text-align:right}
+  .sig-right .for{font-size:8px;color:#9ca3af}
+  .sig-right .company{font-size:10px;font-weight:900;color:#1a1a2e;margin-top:2px}
+  .sig-right .note{font-size:7.5px;color:#aaa;margin-top:4px}
 
-  .watermark-bar{text-align:center;padding:5px;font-size:10px;font-weight:700;letter-spacing:1px}
-  ${isDraft ? '.watermark-bar{background:#fef3c7;color:#92400e;border-bottom:2px solid #f59e0b}' : '.watermark-bar{background:#dcfce7;color:#065f46;border-bottom:2px solid #10b981}'}
-
-  .page-footer{text-align:center;font-size:9.5px;color:#888;margin-top:12px;padding:6px 0;border-top:1px solid #e2e8f0}
+  /* ── Page footer (screen only) ──────────────────────────── */
+  .page-footer{text-align:center;font-size:8.5px;color:#aaa;margin-top:10px;padding:4px 0}
 </style>
 </head>
 <body>
 <div class="wrapper">
 
-  <!-- Action bar (no-print) -->
+  <!-- ── Screen-only action bar ── -->
   <div class="action-bar no-print">
-    <div style="display:flex;align-items:center;gap:12px">
+    <div style="display:flex;align-items:center;gap:10px">
       <h2>${po.id}</h2>
-      <span class="status-pill">${poStatusLabel} PO</span>
+      <span class="status-pill">${poStatusLabel}</span>
     </div>
-    <div class="pills">
-      <button class="pill pill-dl" onclick="window.print()">🖨 Print / Save PDF</button>
+    <div style="display:flex;gap:8px">
+      <button class="pill pill-print" onclick="window.print()">🖨 Print / Save PDF</button>
       <button class="pill pill-close" onclick="window.close()">✕ Close</button>
     </div>
   </div>
 
-  <!-- Document -->
+  <!-- ── Document ── -->
   <div class="doc">
 
     <!-- Status ribbon -->
-    <div class="watermark-bar">${isDraft ? '⚠ DRAFT — NOT RELEASED — FOR REVIEW ONLY' : '✓ FINAL PURCHASE ORDER — OFFICIALLY RELEASED'}</div>
+    <div class="ribbon">${isDraft ? '⚠ DRAFT — NOT RELEASED — FOR REVIEW ONLY' : '✓ FINAL PURCHASE ORDER — OFFICIALLY RELEASED'}</div>
 
-    <!-- Header -->
+    <!-- Header: Buyer info left, Logo right -->
     <div class="doc-head">
-      <div class="left">
-        <small>PO NO: ${po.id}</small>
-        <b>PO Creation date: ${po.created}</b>
-      </div>
-            <div class="logo-box" style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1480 500" style="height:32px;width:auto;display:block;fill:#1a1a2e">
-  <path d="M486.63,66.3l-60.2-50.01c-26.11-21.7-63.99-21.7-90.09,0l-72.83,60.49-72.77-60.49c-26.11-21.7-63.93-21.73-90.06-.06l-60.35,50.07C17.46,85.27,4.25,113.43,4.25,143.15v124.55c0,29.66,13.19,57.79,36,76.75l159.36,132.49c37,30.75,90.68,30.75,127.65,0l159.36-132.49c22.83-18.98,36.03-47.13,36.03-76.81v-124.54c0-29.66-13.21-57.82-36.03-76.79ZM475.67,259.41c0,20.94-9.34,40.82-25.43,54.21l-141.74,117.84c-26.11,21.7-63.99,21.7-90.12,0l-141.74-117.84c-16.09-13.39-25.4-33.27-25.4-54.21v-108c0-20.97,9.34-40.85,25.49-54.24l42.7-35.41c15.24-12.66,37.32-12.63,52.53.03l54.79,45.55-79.96,66.39c-19.76,16.44-19.79,46.78-.03,63.22l90.24,75.2c15.24,12.69,37.35,12.72,52.59.03l90.5-75.23c19.76-16.44,19.76-46.78,0-63.22l-43.94-36.52c-2.18-1.81-5.33-1.81-7.51,0l-27.57,22.9c-2.83,2.35-2.83,6.69,0,9.03l32.68,27.17c5.67,4.7,5.67,13.36,0,18.06l-62.9,52.33c-4.38,3.61-10.69,3.61-15.04-.03l-62.72-52.27c-5.64-4.7-5.64-13.36.03-18.06l50.77-42.17,12.1-10.04,44.25-36.76,35.15-29.19,19.7-16.39c15.24-12.66,37.32-12.66,52.53,0l42.61,35.38c16.09,13.39,25.43,33.24,25.43,54.21v108.03Z"/>
-  <path d="M707.33,52.27h113c2.89,0,5.23,2.34,5.23,5.23v34.2c0,2.89-2.34,5.23-5.23,5.23h-106.41c-22.39,0-40.55,18.15-40.55,40.55v36.15c0,2.89,2.34,5.23,5.23,5.23h117.67c2.89,0,5.23,2.34,5.23,5.23v31.72c0,2.89-2.34,5.23-5.23,5.23h-117.67c-2.89,0-5.23,2.34-5.23,5.23v120.64c0,2.89-2.34,5.23-5.23,5.23h-36.68c-2.89,0-5.23-2.34-5.23-5.23v-213.55c0-44.79,36.31-81.1,81.1-81.1Z"/>
-  <path d="M1219.88,150.75c-13.51-12.13-31.99-18.2-55.42-18.2-.64,0-1.28.01-1.92.03-.62-.01-1.24-.03-1.87-.03-22.97,0-43.83,9.05-59.2,23.78-1.66,1.59-4.42.42-4.42-1.88v-10.88c0-2.89-2.34-5.23-5.23-5.23h-34.2c-2.89,0-5.23,2.34-5.23,5.23v203.35c0,2.89,2.34,5.23,5.23,5.23h36.68c2.89,0,5.23-2.34,5.23-5.23v-120.91c0-7.72,1.24-15.02,3.72-21.92,2.48-6.89,5.93-12.89,10.34-17.99,4.41-5.1,9.78-9.1,16.13-11.99,6.34-2.89,13.51-4.34,21.51-4.34,14.06,0,24.4,3.79,31.02,11.37,6.62,7.59,10.2,19.79,10.75,36.6v129.18c0,2.89,2.34,5.23,5.23,5.23h36.68c2.89,0,5.23-2.34,5.23-5.23v-141.58c0-24.26-6.76-42.46-20.26-54.59Z"/>
-  <path d="M1017.79,143.51v227.99c0,44.8-36.31,81.11-81.09,81.11h-90.01c-2.89,0-5.24-2.35-5.24-5.24v-34.19c0-2.89,2.35-5.24,5.24-5.24h83.41c22.4,0,43.02-18.59,43.02-40.99v-30.86c0-2.32-2.78-3.54-4.47-1.93-15.37,14.69-36.21,23.73-59.15,23.73-.63,0-1.25-.01-1.88-.03-.63.01-1.27.03-1.9.03-23.43,0-41.91-6.06-55.43-18.19-13.51-12.15-20.27-30.33-20.27-54.6v-141.59c0-2.88,2.35-5.23,5.24-5.23h36.68c2.89,0,5.23,2.35,5.23,5.23v129.19c.56,16.81,4.14,29.02,10.76,36.59,6.62,7.59,16.96,11.37,31.02,11.37,7.99,0,15.17-1.45,21.5-4.34,6.34-2.89,11.73-6.89,16.13-11.99,4.41-5.11,7.86-11.1,10.34-17.99,2.48-6.9,3.72-14.21,3.72-21.93v-120.91c0-2.88,2.35-5.23,5.23-5.23h36.69c2.88,0,5.23,2.35,5.23,5.23Z"/>
-  <path d="M1428.61,57.51v97.02c0,2.3-2.75,3.48-4.41,1.89-7.86-7.55-17.16-13.6-27.44-17.73-.34-.16-.7-.33-1.1-.49-23.44-9.76-53.14-4.57-53.14-4.57v.02c-6.73,1.03-13.4,2.79-20,5.32-11.17,4.28-21.09,10.96-29.78,20.06-8.68,9.1-15.65,20.68-20.89,34.74-5.24,14.06-7.86,30.75-7.86,50.04,0,15.99,2.07,30.95,6.2,44.87,4.14,13.93,10.34,25.99,18.61,36.19,8.27,10.2,18.67,18.27,31.22,24.19,12.54,5.93,27.22,8.89,44.04,8.89.43,0,.85-.03,1.28-.03.69.02,1.38.03,2.07.03,22.98,0,43.85-9.06,59.22-23.8,1.66-1.6,4.42-.43,4.42,1.88v10.9c0,2.89,2.34,5.23,5.23,5.23h34.2c2.89,0,5.23-2.34,5.23-5.23V57.51c0-2.89-2.34-5.23-5.23-5.23h-36.68c-2.89,0-5.23,2.34-5.23,5.23ZM1325.42,297.98c-4.83-6.89-8.41-14.75-10.75-23.57-2.35-8.82-3.52-17.78-3.52-26.88,0-9.65,1.03-19.09,3.1-28.33,2.07-9.23,5.51-17.51,10.34-24.81,4.82-7.3,11.02-13.23,18.61-17.78,7.58-4.55,16.89-6.82,27.92-6.82,18.2,0,32.6,6.62,43.22,19.85,10.61,13.23,15.92,31.71,15.92,55.42,0,9.38-1.18,18.55-3.52,27.5-2.35,8.96-5.93,17.03-10.75,24.19-4.83,7.17-11.03,12.96-18.61,17.37-7.59,4.41-16.61,6.62-27.09,6.62s-19.02-2.07-26.47-6.2c-7.44-4.14-13.58-9.65-18.4-16.54Z"/>
-</svg>
-        <div style="font-size:9px;color:#64748b;letter-spacing:2px;text-transform:uppercase;text-align:right">Procure · To · Pay</div>
-      </div>
+      <div class="buyer-info">
+        <div class="buyer-name">Shopsense Retail Technologies Limited</div>
+        <div class="buyer-addr">
+          1st Floor, WeWork Vijay Diamond, Opp. SBI Branch, Cross Road B,<br/>
+          Ajit Nagar, Marol Naka, Mumbai – 400 093, Maharashtra, India
         </div>
+        <div class="buyer-gstin">GSTIN: 27AALCA0442L1ZM &nbsp;|&nbsp; PAN: AALCA0442L</div>
+      </div>
+      <div class="logo-zone">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1480 500" style="height:28px;width:auto;fill:#1a1a2e">
+          <path d="M486.63,66.3l-60.2-50.01c-26.11-21.7-63.99-21.7-90.09,0l-72.83,60.49-72.77-60.49c-26.11-21.7-63.93-21.73-90.06-.06l-60.35,50.07C17.46,85.27,4.25,113.43,4.25,143.15v124.55c0,29.66,13.19,57.79,36,76.75l159.36,132.49c37,30.75,90.68,30.75,127.65,0l159.36-132.49c22.83-18.98,36.03-47.13,36.03-76.81v-124.54c0-29.66-13.21-57.82-36.03-76.79ZM475.67,259.41c0,20.94-9.34,40.82-25.43,54.21l-141.74,117.84c-26.11,21.7-63.99,21.7-90.12,0l-141.74-117.84c-16.09-13.39-25.4-33.27-25.4-54.21v-108c0-20.97,9.34-40.85,25.49-54.24l42.7-35.41c15.24-12.66,37.32-12.63,52.53.03l54.79,45.55-79.96,66.39c-19.76,16.44-19.79,46.78-.03,63.22l90.24,75.2c15.24,12.69,37.35,12.72,52.59.03l90.5-75.23c19.76-16.44,19.76-46.78,0-63.22l-43.94-36.52c-2.18-1.81-5.33-1.81-7.51,0l-27.57,22.9c-2.83,2.35-2.83,6.69,0,9.03l32.68,27.17c5.67,4.7,5.67,13.36,0,18.06l-62.9,52.33c-4.38,3.61-10.69,3.61-15.04-.03l-62.72-52.27c-5.64-4.7-5.64-13.36.03-18.06l50.77-42.17,12.1-10.04,44.25-36.76,35.15-29.19,19.7-16.39c15.24-12.66,37.32-12.66,52.53,0l42.61,35.38c16.09,13.39,25.43,33.24,25.43,54.21v108.03Z"/>
+          <path d="M707.33,52.27h113c2.89,0,5.23,2.34,5.23,5.23v34.2c0,2.89-2.34,5.23-5.23,5.23h-106.41c-22.39,0-40.55,18.15-40.55,40.55v36.15c0,2.89,2.34,5.23,5.23,5.23h117.67c2.89,0,5.23,2.34,5.23,5.23v31.72c0,2.89-2.34,5.23-5.23,5.23h-117.67c-2.89,0-5.23,2.34-5.23,5.23v120.64c0,2.89-2.34,5.23-5.23,5.23h-36.68c-2.89,0-5.23-2.34-5.23-5.23v-213.55c0-44.79,36.31-81.1,81.1-81.1Z"/>
+          <path d="M1219.88,150.75c-13.51-12.13-31.99-18.2-55.42-18.2-.64,0-1.28.01-1.92.03-.62-.01-1.24-.03-1.87-.03-22.97,0-43.83,9.05-59.2,23.78-1.66,1.59-4.42.42-4.42-1.88v-10.88c0-2.89-2.34-5.23-5.23-5.23h-34.2c-2.89,0-5.23,2.34-5.23,5.23v203.35c0,2.89,2.34,5.23,5.23,5.23h36.68c2.89,0,5.23-2.34,5.23-5.23v-120.91c0-7.72,1.24-15.02,3.72-21.92,2.48-6.89,5.93-12.89,10.34-17.99,4.41-5.1,9.78-9.1,16.13-11.99,6.34-2.89,13.51-4.34,21.51-4.34,14.06,0,24.4,3.79,31.02,11.37,6.62,7.59,10.2,19.79,10.75,36.6v129.18c0,2.89,2.34,5.23,5.23,5.23h36.68c2.89,0,5.23-2.34,5.23-5.23v-141.58c0-24.26-6.76-42.46-20.26-54.59Z"/>
+          <path d="M1017.79,143.51v227.99c0,44.8-36.31,81.11-81.09,81.11h-90.01c-2.89,0-5.24-2.35-5.24-5.24v-34.19c0-2.89,2.35-5.24,5.24-5.24h83.41c22.4,0,43.02-18.59,43.02-40.99v-30.86c0-2.32-2.78-3.54-4.47-1.93-15.37,14.69-36.21,23.73-59.15,23.73-.63,0-1.25-.01-1.88-.03-.63.01-1.27.03-1.9.03-23.43,0-41.91-6.06-55.43-18.19-13.51-12.15-20.27-30.33-20.27-54.6v-141.59c0-2.88,2.35-5.23,5.24-5.23h36.68c2.89,0,5.23,2.35,5.23,5.23v129.19c.56,16.81,4.14,29.02,10.76,36.59,6.62,7.59,16.96,11.37,31.02,11.37,7.99,0,15.17-1.45,21.5-4.34,6.34-2.89,11.73-6.89,16.13-11.99,4.41-5.11,7.86-11.1,10.34-17.99,2.48-6.9,3.72-14.21,3.72-21.93v-120.91c0-2.88,2.35-5.23,5.23-5.23h36.69c2.88,0,5.23,2.35,5.23,5.23Z"/>
+          <path d="M1428.61,57.51v97.02c0,2.3-2.75,3.48-4.41,1.89-7.86-7.55-17.16-13.6-27.44-17.73-.34-.16-.7-.33-1.1-.49-23.44-9.76-53.14-4.57-53.14-4.57v.02c-6.73,1.03-13.4,2.79-20,5.32-11.17,4.28-21.09,10.96-29.78,20.06-8.68,9.1-15.65,20.68-20.89,34.74-5.24,14.06-7.86,30.75-7.86,50.04,0,15.99,2.07,30.95,6.2,44.87,4.14,13.93,10.34,25.99,18.61,36.19,8.27,10.2,18.67,18.27,31.22,24.19,12.54,5.93,27.22,8.89,44.04,8.89.43,0,.85-.03,1.28-.03.69.02,1.38.03,2.07.03,22.98,0,43.85-9.06,59.22-23.8,1.66-1.6,4.42-.43,4.42,1.88v10.9c0,2.89,2.34,5.23,5.23,5.23h34.2c2.89,0,5.23-2.34,5.23-5.23V57.51c0-2.89-2.34-5.23-5.23-5.23h-36.68c-2.89,0-5.23,2.34-5.23,5.23ZM1325.42,297.98c-4.83-6.89-8.41-14.75-10.75-23.57-2.35-8.82-3.52-17.78-3.52-26.88,0-9.65,1.03-19.09,3.1-28.33,2.07-9.23,5.51-17.51,10.34-24.81,4.82-7.3,11.02-13.23,18.61-17.78,7.58-4.55,16.89-6.82,27.92-6.82,18.2,0,32.6,6.62,43.22,19.85,10.61,13.23,15.92,31.71,15.92,55.42,0,9.38-1.18,18.55-3.52,27.5-2.35,8.96-5.93,17.03-10.75,24.19-4.83,7.17-11.03,12.96-18.61,17.37-7.59,4.41-16.61,6.62-27.09,6.62s-19.02-2.07-26.47-6.2c-7.44-4.14-13.58-9.65-18.4-16.54Z"/>
+        </svg>
+        <div class="logo-tagline">Procure · To · Pay</div>
       </div>
     </div>
 
-    <div class="po-title-bar">PURCHASE ORDER${isDraft?' — DRAFT':''}</div>
+    <!-- PO Title -->
+    <div class="po-title">PURCHASE ORDER${isDraft ? ' — DRAFT' : ''}</div>
+
+    <!-- PO Meta strip -->
+    <div class="po-meta">
+      <div class="po-meta-cell">
+        <div class="label">PO Number</div>
+        <div class="value">${po.id}</div>
+      </div>
+      <div class="po-meta-cell">
+        <div class="label">PO Date</div>
+        <div class="value">${po.created}</div>
+      </div>
+      <div class="po-meta-cell">
+        <div class="label">Delivery Date</div>
+        <div class="value">${po.endDate || '31-Mar-2026'}</div>
+      </div>
+      <div class="po-meta-cell">
+        <div class="label">Status</div>
+        <div class="value" style="color:${isApproved?'#065f46':'#92400e'}">${poStatusLabel}</div>
+      </div>
+    </div>
 
     <!-- Addresses -->
     <div class="addr-row">
       <div class="addr-cell">
-        <b>To "The Supplier"</b>
-        ${po.vendor}<br/>
+        <div class="label">Vendor / Supplier</div>
+        <strong>${po.vendor}</strong><br/>
         ${vendorAddr.replace(/\n/g,'<br/>')}
       </div>
       <div class="addr-cell">
-        <b>Correspondence Address</b>
-        Shopsense Retail Technologies Limited,<br/>
-        1st Floor, WeWork Vijay Diamond,<br/>
-        Opp. SBI Branch, Cross Road B,<br/>
-        Ajit Nagar, Marol Naka,<br/>
-        Mumbai – 400093<br/>
-        <b style="font-size:10px;color:#555;text-transform:uppercase">Pan No:</b> AALCA0442L
+        <div class="label">Bill To</div>
+        <strong>Shopsense Retail Technologies Limited</strong><br/>
+        1st Floor, WeWork Vijay Diamond, Opp. SBI Branch,<br/>
+        Cross Road B, Marol Naka, Mumbai – 400 093<br/>
+        <span style="color:#1d4ed8;font-weight:700">GSTIN: 27AALCA0442L1ZM</span>
       </div>
     </div>
 
-    <!-- Vendor details -->
-    <div class="vendor-detail-row">
-      <div class="vd-grid">
-        <div><span>Vendor Contact Email:</span> ${vendorEmail}</div>
-        <div><span>Vendor GSTIN No.:</span> <b>${vendorGSTIN}</b></div>
-        <div><span>Vendor State:</span> ${po.vendor.includes('Infra')||po.vendor.includes('Make')?'Gujarat':po.vendor.includes('Global')?'International':'Maharashtra'}</div>
-        <div><span>Vendor PAN No.:</span> ${vendorPAN}</div>
-      </div>
-    </div>
-
-    <!-- Billing details -->
-    <div class="billing-section">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0">
-        <div>
-          <div class="section-title">Billing Details</div>
-          <div class="billing-grid">
-            <div class="lbl">Bill To Location</div>
-            <div class="val">27 Shopsense Retail Technologies Limited<br/>1st Floor, WeWork Vijay Diamond,<br/>Opp SBI Branch, Cross Road B,<br/>Andheri East, Mumbai 400093, Maharashtra</div>
-          </div>
-        </div>
-        <div style="padding-left:20px;border-left:1px solid #e2e8f0">
-          <div class="section-title">&nbsp;</div>
-          <div class="billing-grid">
-            <div class="lbl">PO NO</div>           <div class="val">${po.id}</div>
-            <div class="lbl">PO Approval Date</div><div class="val">${isApproved ? po.created : '—'}</div>
-            <div class="lbl">PO Creation Date</div><div class="val">${po.created}</div>
-            <div class="lbl">PO End Date</div>     <div class="val">${po.endDate||'31-Mar-2026'}</div>
-            <div class="lbl">GSTIN NO</div>        <div class="val">27AALCA0442L1ZM</div>
-          </div>
-        </div>
-      </div>
+    <!-- Vendor detail strip -->
+    <div class="vd-strip">
+      <div><span class="lbl">Vendor Email</span><span class="val">${vendorEmail}</span></div>
+      <div><span class="lbl">Vendor GSTIN</span><span class="val">${vendorGSTIN}</span></div>
+      <div><span class="lbl">Vendor PAN</span><span class="val">${vendorPAN}</span></div>
+      <div><span class="lbl">Tax Treatment</span><span class="val">${isVAT ? 'VAT (International)' : isSplit ? 'CGST + SGST (Intra-state)' : 'IGST (Inter-state)'}</span></div>
     </div>
 
     <!-- Line Items -->
-    <div style="padding:0">
-      <div style="padding:7px 14px 5px;background:#f8fafc;border-bottom:1px solid #ddd">
-        <div class="section-title">Shipping Details</div>
-      </div>
-      <table class="items">
-        <thead>
-          <tr>
-            <th style="width:32px">Sr.<br/>No.</th>
-            <th>Material / Service Description</th>
-            <th>Desc.</th>
-            <th>Delivery<br/>Date</th>
-            <th class="r">Qty</th>
-            <th>UoM</th>
-            <th class="r">Unit Rate<br/>(In INR)</th>
-            <th>Tax Reg<br/>Number</th>
-            <th>Location</th>
-            <th class="r">Amount<br/>(In INR)</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${lineItems.map((li,i)=>{
-            const amt=(li.qty||1)*(li.rate||po.amount);
-            const gPct=li.gst||taxRate;
-            const hsnCode=li.hsnSac||li.code||'NA';
-            const desc2=li.desc||po.title;
-            return `<tr>
-              <td style="text-align:center">${i+1}</td>
-              <td>
-                <div class="desc-main">${desc2}</div>
-                <div class="desc-sub">HSN/SAC CODE: ${hsnCode}</div>
-                <div class="tax-info">${(()=>{
-                  const slabLabel = gPct===0?'Nil Rated / Exempt':gPct===0.1?'0.1% — Precious Metals':gPct===0.25?'0.25% — Rough Diamonds':gPct===1.5?'1.5% — Cut Diamonds':gPct===3?'3% — Gold / Silver':gPct===5?'5% — Reduced Rate':gPct===6?'6% — Special Rate':gPct===12?'12% — Standard Low':gPct===18?'18% — Standard Rate':gPct===28?'28% — Luxury / Demerit':'';
-                  if(gPct===0) return 'Nil Rated / Exempt (0%)';
-                  if(isVAT) return `VAT @ ${gPct}%`;
-                  if(isSplit) return `GST ${gPct}% → CGST ${gPct/2}% + SGST ${gPct/2}% ${slabLabel?'['+slabLabel+']':''}`;
-                  return `IGST @ ${gPct}% ${slabLabel?'['+slabLabel+']':''}`;
-                })()}</div>
-              </td>
-              <td>${desc2.length>18?desc2.substring(0,18)+'…':desc2}</td>
-              <td>${po.endDate||'31-Mar-2026'}</td>
-              <td class="r">${li.qty||1}.00</td>
-              <td>${li.uom||'NUMBER'}</td>
-              <td class="r">${(li.rate||po.amount).toLocaleString('en-IN',{minimumFractionDigits:3})}</td>
-              <td style="font-size:9.5px">27AALCA0442L1ZM</td>
-              <td style="font-size:9.5px">27 Shopsense Retail Technologies Limited</td>
-              <td class="r">${amt.toLocaleString('en-IN',{minimumFractionDigits:2})}</td>
-            </tr>`;
-          }).join('')}
-        </tbody>
-      </table>
-    </div>
+    <div class="sec-hdr">Line Items / Material Description</div>
+    <table class="items">
+      <thead>
+        <tr>
+          <th style="width:24px">#</th>
+          <th style="width:34%">Description</th>
+          <th style="width:9%">HSN/SAC</th>
+          <th class="r" style="width:7%">Qty</th>
+          <th style="width:6%">UOM</th>
+          <th class="r" style="width:11%">Unit Rate (${sym})</th>
+          <th class="r" style="width:10%">Taxable Amt (${sym})</th>
+          ${isVAT
+            ? `<th class="r" style="width:8%">VAT %</th><th class="r" style="width:10%">VAT Amt</th>`
+            : isSplit
+              ? `<th class="r" style="width:5%">GST %</th><th class="r" style="width:9%">CGST+SGST</th>`
+              : `<th class="r" style="width:5%">IGST %</th><th class="r" style="width:9%">IGST Amt</th>`}
+        </tr>
+      </thead>
+      <tbody>
+        ${lineItems.map((li,i)=>{
+          const qty    = li.qty  || 1;
+          const rate   = li.rate || po.amount;
+          const amt    = qty * rate;
+          const gPct   = li.gst  || taxRate;
+          const taxAmt = amt * (gPct / 100);
+          const half   = taxAmt / 2;
+          const hsnCode= li.hsnSac || li.code || '—';
+          const desc2  = li.desc  || po.title;
+          const slabLabel = gPct===0?'Nil':gPct===5?'5%':gPct===12?'12%':gPct===18?'18%':gPct===28?'28%':`${gPct}%`;
+          return `<tr>
+            <td style="text-align:center;color:#9ca3af">${i+1}</td>
+            <td>
+              <div class="desc-main">${desc2}</div>
+              <div class="tax-info">${gPct===0?'Nil Rated / Exempt':isVAT?`VAT @ ${gPct}%`:isSplit?`CGST ${gPct/2}% + SGST ${gPct/2}%`:`IGST @ ${gPct}%`} &nbsp;[${slabLabel}]</div>
+            </td>
+            <td style="font-family:'Courier New',monospace;font-size:8px">${hsnCode}</td>
+            <td class="r">${qty.toFixed(2)}</td>
+            <td>${li.uom||'NOS'}</td>
+            <td class="r">${rate.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
+            <td class="r" style="font-weight:600">${amt.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
+            ${isVAT
+              ? `<td class="r">${gPct}%</td><td class="r" style="color:#7c3aed;font-weight:600">${taxAmt.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2})}</td>`
+              : isSplit
+                ? `<td class="r">${gPct}%</td><td class="r" style="color:#059669;font-weight:600">${half.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2})}+${half.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2})}</td>`
+                : `<td class="r">${gPct}%</td><td class="r" style="font-weight:600">${taxAmt.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2})}</td>`}
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>
 
-    <!-- Tax rows -->
-    ${gstAmt === 0 ? `
-    <div class="tax-row" style="background:#f9fafb">
-      <div class="tax-label" style="color:#6b7280;font-style:italic">${isVAT ? 'VAT' : isSplit ? 'CGST / SGST' : 'IGST'} — Nil Rated / Exempt</div>
-      <div class="tax-val" style="color:#9ca3af">₹0.00</div>
+    <!-- Tax summary -->
+    <div class="tax-block">
+      <div class="tax-row" style="background:#fafafa">
+        <div class="tax-lbl">Taxable Amount (Sub-total)</div>
+        <div class="tax-val">${sym}${subtotal.toLocaleString('en-IN',{minimumFractionDigits:2})}</div>
+      </div>
+      ${gstAmt === 0 ? `
+      <div class="tax-row"><div class="tax-lbl" style="color:#9ca3af;font-style:italic">Tax — Nil Rated / Exempt</div><div class="tax-val" style="color:#9ca3af">${sym}0.00</div></div>
+      ` : isVAT ? `
+      <div class="tax-row"><div class="tax-lbl">VAT @ ${taxRate}%</div><div class="tax-val" style="color:#7c3aed">${sym}${gstAmt.toLocaleString('en-IN',{minimumFractionDigits:2})}</div></div>
+      ` : isSplit ? `
+      <div class="tax-row"><div class="tax-lbl">CGST @ ${taxRate/2}%</div><div class="tax-val">₹${(gstAmt/2).toLocaleString('en-IN',{minimumFractionDigits:2})}</div></div>
+      <div class="tax-row"><div class="tax-lbl">SGST @ ${taxRate/2}%</div><div class="tax-val">₹${(gstAmt/2).toLocaleString('en-IN',{minimumFractionDigits:2})}</div></div>
+      ` : `
+      <div class="tax-row"><div class="tax-lbl">IGST @ ${taxRate}%</div><div class="tax-val">₹${gstAmt.toLocaleString('en-IN',{minimumFractionDigits:2})}</div></div>
+      `}
+      <div class="grand-row">
+        <div class="tax-lbl">GRAND TOTAL</div>
+        <div class="tax-val">${sym}${grandTotal.toLocaleString('en-IN',{minimumFractionDigits:2})}</div>
+      </div>
     </div>
-    ` : isVAT ? `
-    <div class="tax-row"><div class="tax-label">VAT @ ${taxRate}%</div><div class="tax-val">${po.currencySymbol||'₹'}${gstAmt.toLocaleString('en-IN',{minimumFractionDigits:2})}</div></div>
-    <div class="tax-row" style="background:#faf5ff"><div class="tax-label" style="font-weight:700">Total Tax (VAT)</div><div class="tax-val" style="font-weight:700;color:#7c3aed">${po.currencySymbol||'₹'}${gstAmt.toLocaleString('en-IN',{minimumFractionDigits:2})}</div></div>
-    ` : isSplit ? `
-    <div class="tax-row"><div class="tax-label">CGST @ ${taxRate/2}%</div><div class="tax-val">₹${(gstAmt/2).toLocaleString('en-IN',{minimumFractionDigits:2})}</div></div>
-    <div class="tax-row"><div class="tax-label">SGST @ ${taxRate/2}%</div><div class="tax-val">₹${(gstAmt/2).toLocaleString('en-IN',{minimumFractionDigits:2})}</div></div>
-    <div class="tax-row" style="background:#f8fafc"><div class="tax-label" style="font-weight:700">Total Tax (CGST + SGST)</div><div class="tax-val" style="font-weight:700">₹${gstAmt.toLocaleString('en-IN',{minimumFractionDigits:2})}</div></div>
-    ` : `
-    <div class="tax-row"><div class="tax-label">IGST @ ${taxRate}%</div><div class="tax-val">₹${gstAmt.toLocaleString('en-IN',{minimumFractionDigits:2})}</div></div>
-    <div class="tax-row" style="background:#f8fafc"><div class="tax-label" style="font-weight:700">Total Tax (IGST)</div><div class="tax-val" style="font-weight:700">₹${gstAmt.toLocaleString('en-IN',{minimumFractionDigits:2})}</div></div>
-    `}
-    <div class="grand-total-row"><div class="tax-label">Grand Total</div><div class="tax-val">₹${grandTotal.toLocaleString('en-IN',{minimumFractionDigits:2})}</div></div>
 
     <!-- Amount in words -->
-    <div class="amt-words"><b>AMOUNT (in words):</b> ${amtWords}</div>
+    <div class="amt-words">
+      <b>Amount in Words:</b>&nbsp;${amtWords}
+    </div>
 
-    <!-- Terms -->
-    <div class="terms-section">
-      <div class="section-title">Delivery &amp; Payment Terms</div>
+    <!-- Terms & Conditions -->
+    <div class="sec-hdr">Delivery &amp; Payment Terms</div>
+    <div class="terms">
       <div class="terms-grid">
-        <div class="lbl">Delivery Instruction</div>
-        <div>Deliver to billing address. Prior appointment required.</div>
-        <div class="lbl">Payment Milestones</div>
-        <div>Payment is to be made immediately upon receipt of the Proforma Invoice or Tax Invoice.</div>
-        <div class="lbl">Insurance Terms</div>
-        <div>Transit insurance to be arranged by supplier.</div>
-        <div class="lbl">Tax Terms</div>
-        <div>GST at applicable rates shall be applicable on the above charges. No other taxes are applicable. All payments are subject to applicable TDS as per existing rates and regulations.</div>
+        <div class="lbl">Delivery</div><div class="val">Deliver to billing address. Prior appointment required.</div>
+        <div class="lbl">Payment</div><div class="val">Net 30 days from receipt of original Tax Invoice with GRN.</div>
+        <div class="lbl">Insurance</div><div class="val">Transit insurance to be arranged by supplier.</div>
+        <div class="lbl">Tax</div><div class="val">${isVAT?'VAT at applicable rates. No Indian GST applicable (International PO).':isSplit?'GST (CGST + SGST) at applicable rates. ITC available.':'GST (IGST) at applicable rates. All payments subject to TDS as per applicable rates.'}</div>
+        <div class="lbl">Validity</div><div class="val">This PO is valid until ${po.endDate||'31-Mar-2026'} unless cancelled in writing.</div>
       </div>
     </div>
 
-    <!-- T&C -->
-    <div class="annex-section">
-      <div class="section-title">Terms &amp; Conditions</div>
-      <div style="line-height:1.7;color:#333">
-        The Invoice acceptance against this PO would be subject to the actual receipt of the services/goods and will require user approvals.
-      </div>
+    <div class="tnc">
+      <div class="sec-hdr" style="margin:-6px -12px 6px;padding:4px 12px">Terms &amp; Conditions</div>
+      1. Acceptance of this PO constitutes agreement to all terms herein. &nbsp;
+      2. Invoice must reference this PO number. &nbsp;
+      3. Goods/services are subject to acceptance at our premises. &nbsp;
+      4. Vendor must provide GST-compliant tax invoice. &nbsp;
+      5. Any variation to scope must be approved in writing before commencement.
     </div>
 
-    <!-- Annexure -->
-    <div class="annex-section">
-      <div class="section-title">Annexure: Delivery Address</div>
-      <div style="display:grid;grid-template-columns:220px 1fr;gap:8px;font-size:10.5px">
-        <div style="font-weight:700">27 Shopsense Retail Technologies Limited</div>
-        <div>1st Floor, WeWork Vijay Diamond, Opp SBI Branch, Cross Road B, Ajit Nagar, Kondivita, Andheri East, MUMBAI – 400093.</div>
+    <!-- Delivery address annexure -->
+    <div class="annexure">
+      <div class="sec-hdr" style="margin:-6px -12px 6px;padding:4px 12px">Annexure: Delivery Address</div>
+      <div class="annexure-grid">
+        <div style="font-weight:700">Shopsense Retail Technologies Limited</div>
+        <div>1st Floor, WeWork Vijay Diamond, Opp. SBI Branch, Cross Road B, Ajit Nagar, Kondivita, Andheri East, Mumbai – 400 093, Maharashtra</div>
       </div>
     </div>
 
     <!-- Signature -->
-    <div class="footer-sign">
-      <div style="font-size:9.5px;color:#555;line-height:1.7">
-        ${isDraft?`<span style="color:#b91c1c;font-weight:700">⚠ THIS IS A DRAFT DOCUMENT — NOT VALID FOR PAYMENT<br/>Status: ${po.status} | Approval pending</span>`
-                 :`<span style="color:#065f46;font-weight:700">✓ OFFICIALLY RELEASED — VALID FOR PAYMENT<br/>Approved on: ${po.created}</span>`}
+    <div class="sig-bar">
+      <div class="sig-left">
+        ${isDraft
+          ? `<span style="color:#b91c1c;font-weight:800">⚠ DRAFT — NOT VALID FOR PAYMENT</span><br/>
+             Status: ${po.status} &nbsp;|&nbsp; Pending approval`
+          : `<span style="color:#065f46;font-weight:800">✓ OFFICIALLY RELEASED — VALID FOR PAYMENT</span><br/>
+             Approved: ${po.created} &nbsp;|&nbsp; PO: ${po.id}`}
       </div>
-      <div class="sign-box">
+      <div class="sig-right">
         <div class="for">For</div>
         <div class="company">Shopsense Retail Technologies Limited</div>
-        <div class="note">This is a computerized order. No signatures are required.</div>
+        <div class="note">This is a system-generated purchase order. No physical signature required.</div>
       </div>
     </div>
 
-  </div>
+  </div><!-- /.doc -->
 
-  <div class="page-footer no-print">Page 1 of 1 · Generated ${new Date().toLocaleString()}</div>
+  <div class="page-footer no-print">Page 1 of 1 &nbsp;·&nbsp; Generated ${new Date().toLocaleString()} &nbsp;·&nbsp; ${po.id}</div>
 </div>
 </body>
 </html>`;
@@ -5244,22 +5347,23 @@ const EXP_SCHEMAS = {
     label: 'Purchase Orders',
     icon: '📋',
     fields: [
-      {key:'id',       label:'PO Number',       type:'text',  default:true},
-      {key:'title',    label:'PO Title',         type:'text',  default:true},
-      {key:'vendor',   label:'Vendor',           type:'text',  default:true},
-      {key:'dept',     label:'Department',       type:'text',  default:true},
-      {key:'type',     label:'PO Type',          type:'text',  default:true},
-      {key:'poType',   label:'Goods/Services',   type:'text',  default:true},
-      {key:'status',   label:'Status',           type:'text',  default:true},
-      {key:'amount',   label:'Taxable Amount',   type:'currency',default:true},
-      {key:'gst',      label:'GST Amount',       type:'currency',default:true},
-      {key:'total',    label:'Grand Total',      type:'currency',default:true},
-      {key:'created',  label:'Created Date',     type:'date',  default:true},
+      {key:'id',       label:'PO Number',         type:'text'},
+      {key:'title',    label:'PO Title',           type:'text'},
+      {key:'vendor',   label:'Vendor',             type:'text'},
+      {key:'dept',     label:'Department',         type:'text'},
+      {key:'type',     label:'PO Type',            type:'text'},
+      {key:'poType',   label:'Goods / Services',   type:'text'},
+      {key:'status',   label:'Status',             type:'text'},
+      {key:'amount',   label:'Taxable Amount',     type:'currency'},
+      {key:'gst',      label:'GST Amount',         type:'currency'},
+      {key:'total',    label:'Grand Total',        type:'currency'},
+      {key:'created',  label:'Created Date',       type:'date'},
+      {key:'prRef',    label:'Linked PR',          type:'text'},
     ],
     filters: [
-      {key:'status', label:'Status', options:['All','Draft','In Review','Approved','Rejected','Closed']},
+      {key:'status', label:'Status',     options:['All','Draft','In Review','Approved','Rejected','Closed']},
       {key:'dept',   label:'Department', options:['All','Engineering','Marketing','Finance','Operations','IT','HR']},
-      {key:'type',   label:'PO Type', options:['All','Direct PO','With PR']},
+      {key:'type',   label:'PO Type',   options:['All','Direct PO','With PR']},
     ],
     getData: ()=>db.pos,
   },
@@ -5267,18 +5371,20 @@ const EXP_SCHEMAS = {
     label: 'Vendor Master',
     icon: '🏢',
     fields: [
-      {key:'id',       label:'Vendor ID',      type:'text',  default:true},
-      {key:'name',     label:'Legal Name',      type:'text',  default:true},
-      {key:'type',     label:'Type',            type:'text',  default:true},
-      {key:'gstin',    label:'GSTIN',           type:'text',  default:true},
-      {key:'pan',      label:'PAN',             type:'text',  default:true},
-      {key:'category', label:'Category',        type:'text',  default:true},
-      {key:'status',   label:'Status',          type:'text',  default:true},
-      {key:'date',     label:'Onboarded Date',  type:'date',  default:true},
+      {key:'id',           label:'Vendor ID',          type:'text'},
+      {key:'name',         label:'Legal Name',          type:'text'},
+      {key:'type',         label:'Type',                type:'text'},
+      {key:'registration', label:'GST Registration',   type:'text'},
+      {key:'gstin',        label:'GSTIN',               type:'text'},
+      {key:'pan',          label:'PAN',                 type:'text'},
+      {key:'category',     label:'Category',            type:'text'},
+      {key:'status',       label:'Onboarding Status',  type:'text'},
+      {key:'date',         label:'Onboarded Date',      type:'date'},
     ],
     filters: [
-      {key:'type',   label:'Type',   options:['All','Domestic','International']},
-      {key:'status', label:'Status', options:['All','Approved','Pending','Rejected']},
+      {key:'type',         label:'Type',         options:['All','Domestic','International']},
+      {key:'registration', label:'Registration', options:['All','Registered','Unregistered']},
+      {key:'status',       label:'Status',       options:['All','Approved','Pending','Rejected']},
     ],
     getData: ()=>db.vendors,
   },
@@ -5286,19 +5392,22 @@ const EXP_SCHEMAS = {
     label: 'Goods Receipt Notes',
     icon: '📦',
     fields: [
-      {key:'id',         label:'GRN Number',      type:'text',  default:true},
-      {key:'poId',       label:'PO Reference',    type:'text',  default:true},
-      {key:'vendor',     label:'Vendor',          type:'text',  default:true},
-      {key:'date',       label:'Receipt Date',    type:'date',  default:true},
-      {key:'receiver',   label:'Received By',     type:'text',  default:true},
-      {key:'challan',    label:'Challan No.',      type:'text',  default:true},
-      {key:'location',   label:'Location',        type:'text',  default:true},
-      {key:'inspection', label:'Inspection',      type:'text',  default:true},
-      {key:'status',     label:'Status',          type:'text',  default:true},
-      {key:'recvValue',  label:'Received Value',  type:'currency',default:true},
+      {key:'id',         label:'GRN Number',       type:'text'},
+      {key:'poId',       label:'PO Reference',     type:'text'},
+      {key:'poTitle',    label:'PO Title',          type:'text'},
+      {key:'vendor',     label:'Vendor',            type:'text'},
+      {key:'date',       label:'Receipt Date',      type:'date'},
+      {key:'receiver',   label:'Received By',       type:'text'},
+      {key:'challan',    label:'Challan No.',        type:'text'},
+      {key:'location',   label:'Location',          type:'text'},
+      {key:'inspection', label:'Inspection Result', type:'text'},
+      {key:'status',     label:'Status',            type:'text'},
+      {key:'remarks',    label:'Remarks',           type:'text'},
+      {key:'poValue',    label:'PO Value',          type:'currency'},
+      {key:'recvValue',  label:'Received Value',    type:'currency'},
     ],
     filters: [
-      {key:'status', label:'Status', options:['All','Draft','Submitted','Accepted','Partially Accepted','Rejected']},
+      {key:'status', label:'Status', options:['All','Submitted','Accepted','Partially Accepted','Rejected']},
     ],
     getData: ()=>db.grns,
   },
@@ -5306,19 +5415,19 @@ const EXP_SCHEMAS = {
     label: 'Invoices',
     icon: '🧾',
     fields: [
-      {key:'id',          label:'Invoice No.',      type:'text',  default:true},
-      {key:'date',        label:'Invoice Date',     type:'date',  default:true},
-      {key:'vendor',      label:'Vendor',           type:'text',  default:true},
-      {key:'gstin',       label:'GSTIN',            type:'text',  default:true},
-      {key:'taxable',     label:'Taxable Amount',   type:'currency',default:true},
-      {key:'gst',         label:'GST Amount',       type:'currency',default:true},
-      {key:'total',       label:'Invoice Total',    type:'currency',default:true},
-      {key:'poId',        label:'Mapped PO',        type:'text',  default:true},
-      {key:'poValue',     label:'PO Value',         type:'currency',default:true},
-      {key:'matchStatus', label:'Match Status',     type:'text',  default:true},
-      {key:'status',      label:'Status',           type:'text',  default:true},
-      {key:'ocrConf',     label:'OCR Confidence %', type:'text',  default:true},
-      {key:'uploadedOn',  label:'Uploaded On',      type:'date',  default:true},
+      {key:'id',          label:'Invoice No.',       type:'text'},
+      {key:'date',        label:'Invoice Date',      type:'date'},
+      {key:'vendor',      label:'Vendor',            type:'text'},
+      {key:'gstin',       label:'Vendor GSTIN',      type:'text'},
+      {key:'taxable',     label:'Taxable Amount',    type:'currency'},
+      {key:'gst',         label:'GST Amount',        type:'currency'},
+      {key:'total',       label:'Invoice Total',     type:'currency'},
+      {key:'poId',        label:'Mapped PO',         type:'text'},
+      {key:'poValue',     label:'PO Value',          type:'currency'},
+      {key:'matchStatus', label:'Match Status',      type:'text'},
+      {key:'status',      label:'Approval Status',   type:'text'},
+      {key:'ocrConf',     label:'OCR Confidence %',  type:'text'},
+      {key:'uploadedOn',  label:'Uploaded On',       type:'date'},
     ],
     filters: [
       {key:'matchStatus', label:'Match Status', options:['All','Matched','Partially Matched','Unmatched']},
@@ -5326,21 +5435,65 @@ const EXP_SCHEMAS = {
     ],
     getData: ()=>db.invoices,
   },
+  creditNotes: {
+    label: 'Credit Notes',
+    icon: '🔵',
+    fields: [
+      {key:'id',       label:'CN Number',          type:'text'},
+      {key:'date',     label:'Date',               type:'date'},
+      {key:'vendor',   label:'Vendor',             type:'text'},
+      {key:'invoice',  label:'Linked Invoice',     type:'text'},
+      {key:'poId',     label:'Linked PO',          type:'text'},
+      {key:'reason',   label:'Reason',             type:'text'},
+      {key:'taxable',  label:'Taxable Amount',     type:'currency'},
+      {key:'gst',      label:'GST Amount',         type:'currency'},
+      {key:'total',    label:'Total Credit',       type:'currency'},
+      {key:'status',   label:'Status',             type:'text'},
+      {key:'remarks',  label:'Remarks',            type:'text'},
+    ],
+    filters: [
+      {key:'status', label:'Status', options:['All','Draft','Pending','Approved','Rejected']},
+      {key:'reason', label:'Reason', options:['All','Price Correction','Return of Goods','Quantity Shortage','Damaged Goods','Discount Adjustment']},
+    ],
+    getData: ()=>db.creditNotes||[],
+  },
+  debitNotes: {
+    label: 'Debit Notes',
+    icon: '🔴',
+    fields: [
+      {key:'id',       label:'DN Number',          type:'text'},
+      {key:'date',     label:'Date',               type:'date'},
+      {key:'vendor',   label:'Vendor',             type:'text'},
+      {key:'grnId',    label:'Linked GRN',         type:'text'},
+      {key:'poId',     label:'Linked PO',          type:'text'},
+      {key:'reason',   label:'Reason',             type:'text'},
+      {key:'taxable',  label:'Taxable Amount',     type:'currency'},
+      {key:'gst',      label:'GST Amount',         type:'currency'},
+      {key:'total',    label:'Total Debit',        type:'currency'},
+      {key:'status',   label:'Status',             type:'text'},
+      {key:'remarks',  label:'Remarks',            type:'text'},
+    ],
+    filters: [
+      {key:'status', label:'Status', options:['All','Draft','Pending','Approved','Rejected']},
+      {key:'reason', label:'Reason', options:['All','Short Shipment','Quality Rejection','Price Difference','Penalty / Liquidated Damages','Freight Overcharge']},
+    ],
+    getData: ()=>db.debitNotes||[],
+  },
   auditLog: {
     label: 'Audit Log',
     icon: '🔒',
     fields: [
-      {key:'ts',       label:'Timestamp',  type:'text',  default:true},
-      {key:'event',    label:'Event',      type:'text',  default:true},
-      {key:'entity',   label:'Entity',     type:'text',  default:true},
-      {key:'entityId', label:'Entity ID',  type:'text',  default:true},
-      {key:'actor',    label:'Actor',      type:'text',  default:true},
-      {key:'role',     label:'Role',       type:'text',  default:true},
-      {key:'detail',   label:'Details',    type:'text',  default:true},
+      {key:'ts',       label:'Timestamp',   type:'text'},
+      {key:'event',    label:'Event',       type:'text'},
+      {key:'entity',   label:'Entity Type', type:'text'},
+      {key:'entityId', label:'Entity ID',   type:'text'},
+      {key:'actor',    label:'Actor',       type:'text'},
+      {key:'role',     label:'Role',        type:'text'},
+      {key:'detail',   label:'Details',     type:'text'},
     ],
     filters: [
-      {key:'event',  label:'Event',  options:['All','Create','Submit','Approve','Reject','Send Back','Edit']},
-      {key:'entity', label:'Entity', options:['All','Purchase Order','Vendor','GRN','Invoice']},
+      {key:'event',  label:'Event',  options:['All','Create','Submit','Approve','Reject','Send Back','Edit','Export']},
+      {key:'entity', label:'Entity', options:['All','Purchase Order','Vendor','GRN','Invoice','Credit Note','Debit Note']},
     ],
     getData: ()=>db.auditLog,
   },
@@ -5348,33 +5501,38 @@ const EXP_SCHEMAS = {
     label: 'Management Summary',
     icon: '📊',
     fields: [
-      {key:'metric',   label:'KPI Metric',  type:'text',    default:true},
-      {key:'value',    label:'Value',       type:'text',    default:true},
-      {key:'detail',   label:'Detail',      type:'text',    default:true},
-      {key:'period',   label:'Period',      type:'text',    default:true},
+      {key:'metric', label:'KPI Metric', type:'text'},
+      {key:'value',  label:'Value',      type:'text'},
+      {key:'detail', label:'Detail',     type:'text'},
+      {key:'period', label:'Period',     type:'text'},
     ],
     filters: [],
     getData: ()=>[
-      {metric:'Total POs (MTD)',          value:db.pos.length,                              detail:'All statuses',                period:'Mar 2026'},
-      {metric:'Approved POs',             value:db.pos.filter(p=>p.status==='Approved').length, detail:'Final approvals',         period:'Mar 2026'},
-      {metric:'Pending Approvals',        value:db.pos.filter(p=>p.status==='In Review').length,detail:'Awaiting action',         period:'Mar 2026'},
-      {metric:'Draft POs',                value:db.pos.filter(p=>p.status==='Draft').length,   detail:'Not yet submitted',        period:'Mar 2026'},
-      {metric:'Rejected POs',             value:db.pos.filter(p=>p.status==='Rejected').length, detail:'Rejected by approvers',   period:'Mar 2026'},
-      {metric:'Total PO Spend (Approved)',value:'₹'+db.pos.filter(p=>p.status==='Approved').reduce((a,p)=>a+p.total,0).toLocaleString('en-IN'),detail:'Approved POs only',period:'Mar 2026'},
-      {metric:'Total GST (Approved POs)', value:'₹'+db.pos.filter(p=>p.status==='Approved').reduce((a,p)=>a+p.gst,0).toLocaleString('en-IN'),detail:'GST amount',period:'Mar 2026'},
-      {metric:'Total Vendors',            value:db.vendors.length,                          detail:'All statuses',                period:'Mar 2026'},
-      {metric:'Approved Vendors',         value:db.vendors.filter(v=>v.status==='Approved').length,detail:'Active vendor master', period:'Mar 2026'},
-      {metric:'Pending Vendor Onboarding',value:db.vendors.filter(v=>v.status==='Pending').length,detail:'Awaiting approval',     period:'Mar 2026'},
-      {metric:'Total GRNs',               value:db.grns.length,                             detail:'All statuses',                period:'Mar 2026'},
-      {metric:'Accepted GRNs',            value:db.grns.filter(g=>g.status==='Accepted').length,detail:'Fully accepted',          period:'Mar 2026'},
-      {metric:'Partial GRNs',             value:db.grns.filter(g=>g.status==='Partially Accepted').length,detail:'Short/damaged',  period:'Mar 2026'},
-      {metric:'Total Invoices',           value:db.invoices.length,                         detail:'All statuses',                period:'Mar 2026'},
-      {metric:'Invoice Match Rate',       value:Math.round(db.invoices.filter(i=>i.matchStatus==='Matched').length/db.invoices.length*100)+'%',detail:'Matched invoices',period:'Mar 2026'},
-      {metric:'Invoices On Hold',         value:db.invoices.filter(i=>i.status==='On Hold').length,detail:'Pending approval',     period:'Mar 2026'},
-      {metric:'Audit Events (Total)',     value:db.auditLog.length,                         detail:'Immutable log',               period:'All time'},
+      {metric:'Total POs (MTD)',           value:db.pos.length,                                                             detail:'All statuses',              period:'Mar 2026'},
+      {metric:'Approved POs',              value:db.pos.filter(p=>p.status==='Approved').length,                            detail:'Final approvals',           period:'Mar 2026'},
+      {metric:'Pending Approvals',         value:db.pos.filter(p=>p.status==='In Review').length,                           detail:'Awaiting action',           period:'Mar 2026'},
+      {metric:'Draft POs',                 value:db.pos.filter(p=>p.status==='Draft').length,                               detail:'Not yet submitted',         period:'Mar 2026'},
+      {metric:'Rejected POs',              value:db.pos.filter(p=>p.status==='Rejected').length,                            detail:'Rejected by approvers',     period:'Mar 2026'},
+      {metric:'Total PO Spend (Approved)', value:'₹'+db.pos.filter(p=>p.status==='Approved').reduce((a,p)=>a+p.total,0).toLocaleString('en-IN'), detail:'Approved POs only', period:'Mar 2026'},
+      {metric:'Total GST (Approved POs)',  value:'₹'+db.pos.filter(p=>p.status==='Approved').reduce((a,p)=>a+p.gst,0).toLocaleString('en-IN'),   detail:'GST amount',        period:'Mar 2026'},
+      {metric:'Total Vendors',             value:db.vendors.length,                                                         detail:'All statuses',              period:'Mar 2026'},
+      {metric:'Approved Vendors',          value:db.vendors.filter(v=>v.status==='Approved').length,                        detail:'Active vendor master',      period:'Mar 2026'},
+      {metric:'Pending Vendor Onboarding', value:db.vendors.filter(v=>v.status==='Pending').length,                         detail:'Awaiting approval',         period:'Mar 2026'},
+      {metric:'Total GRNs',                value:db.grns.length,                                                            detail:'All statuses',              period:'Mar 2026'},
+      {metric:'Accepted GRNs',             value:db.grns.filter(g=>g.status==='Accepted').length,                           detail:'Fully accepted',            period:'Mar 2026'},
+      {metric:'Partial GRNs',              value:db.grns.filter(g=>g.status==='Partially Accepted').length,                 detail:'Short / damaged',           period:'Mar 2026'},
+      {metric:'Total Invoices',            value:db.invoices.length,                                                        detail:'All statuses',              period:'Mar 2026'},
+      {metric:'Invoice Match Rate',        value:db.invoices.length?Math.round(db.invoices.filter(i=>i.matchStatus==='Matched').length/db.invoices.length*100)+'%':'0%', detail:'Matched invoices', period:'Mar 2026'},
+      {metric:'Invoices On Hold',          value:db.invoices.filter(i=>i.status==='On Hold').length,                        detail:'Pending approval',          period:'Mar 2026'},
+      {metric:'Total Credit Notes',        value:(db.creditNotes||[]).length,                                               detail:'All statuses',              period:'Mar 2026'},
+      {metric:'Total Debit Notes',         value:(db.debitNotes||[]).length,                                                detail:'All statuses',              period:'Mar 2026'},
+      {metric:'Credit Note Value',         value:'₹'+(db.creditNotes||[]).reduce((a,r)=>a+r.total,0).toLocaleString('en-IN'), detail:'Total credit value',     period:'Mar 2026'},
+      {metric:'Debit Note Value',          value:'₹'+(db.debitNotes||[]).reduce((a,r)=>a+r.total,0).toLocaleString('en-IN'),  detail:'Total debit value',      period:'Mar 2026'},
+      {metric:'Audit Events (Total)',      value:db.auditLog.length,                                                        detail:'Immutable log',             period:'All time'},
     ],
   },
 };
+
 
 let expCurrentDs   = 'pos';
 let expCurrentFmt  = 'csv';
@@ -5421,8 +5579,8 @@ function selectDataset(ds, rowEl){
     </div>
   `).join('');
   if(!schema.filters.length) ff.innerHTML='<div style="font-size:13px;color:var(--text-3);padding:4px 0">No additional filters for this dataset</div>';
-  // Column selector
-  expSelectedCols=schema.fields.filter(f=>f.default).map(f=>f.key);
+  // Always select ALL columns by default
+  expSelectedCols = schema.fields.map(f => f.key);
   renderColSelector();
   updateExpCount();
 }
