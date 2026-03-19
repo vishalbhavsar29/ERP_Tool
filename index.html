@@ -693,7 +693,7 @@ textarea{resize:vertical;min-height:80px}
               </div>
               <div class="form-group">
                 <label>Vendor <span class="req">*</span></label>
-                <select id="po-vendor">
+                <select id="po-vendor" onchange="renderLineItems()">
                   <option value="">— Select Vendor —</option>
                   <option>Synapse Tech Pvt Ltd</option>
                   <option>Infra Solutions Pvt Ltd</option>
@@ -3429,58 +3429,135 @@ function switchLineType(type) {
   document.getElementById('tab-services').classList.toggle('active',type==='services');
   renderLineItems();
 }
+
+// ── Tax type logic ────────────────────────────────────────────────────────
+// Buyer: Shopsense Retail Technologies Ltd — Maharashtra (State code 27)
+const BUYER_STATE_CODE = '27';
+
+function getVendorTaxType(vendorName) {
+  const v = db.vendors.find(v => v.name === vendorName || v.name === vendorName?.replace(' (International)',''));
+  if (!v) return 'IGST';                          // unknown → IGST
+  if (v.type === 'International') return 'IGST';  // overseas → IGST
+  if (!v.gstin || v.gstin === 'N/A' || v.registration === 'Unregistered') return 'IGST'; // unregistered → IGST (RCM)
+  const vendorState = v.gstin.substring(0, 2);
+  return vendorState === BUYER_STATE_CODE ? 'CGST_SGST' : 'IGST';
+}
+
 function renderLineItems() {
-  const isGoods=db.lineItemType==='goods';
-  const sym = db.currencySymbol || '₹';
-  const head=document.getElementById('line-items-head');
-  const body=document.getElementById('line-items-body');
-  const foot=document.getElementById('line-items-foot');
-  head.innerHTML=`<tr>
+  const isGoods = db.lineItemType === 'goods';
+  const sym     = db.currencySymbol || '₹';
+  const vendorName = document.getElementById('po-vendor')?.value || '';
+  const taxType    = getVendorTaxType(vendorName);
+  const isSplit    = taxType === 'CGST_SGST';
+  const head = document.getElementById('line-items-head');
+  const body = document.getElementById('line-items-body');
+  const foot = document.getElementById('line-items-foot');
+
+  // ── Tax type banner ──────────────────────────────────────────────────────
+  let taxBanner = document.getElementById('po-tax-type-banner');
+  if (!taxBanner) {
+    taxBanner = document.createElement('div');
+    taxBanner.id = 'po-tax-type-banner';
+    taxBanner.style.cssText = 'margin-bottom:10px;padding:8px 14px;border-radius:8px;font-size:12.5px;font-weight:600;display:flex;align-items:center;gap:8px';
+    const lineItemsCard = document.getElementById('line-items-table')?.closest('.card');
+    if (lineItemsCard) lineItemsCard.querySelector('.card-body')?.prepend(taxBanner);
+  }
+  if (!vendorName) {
+    taxBanner.style.display = 'none';
+  } else if (isSplit) {
+    taxBanner.style.display  = 'flex';
+    taxBanner.style.background = '#d1fae5';
+    taxBanner.style.border     = '1px solid #6ee7b7';
+    taxBanner.style.color      = '#065f46';
+    taxBanner.innerHTML = `✅ <span>Intra-state supply — <b>CGST + SGST</b> applicable (Vendor &amp; Buyer both in Maharashtra)</span>`;
+  } else {
+    taxBanner.style.display  = 'flex';
+    taxBanner.style.background = '#dbeafe';
+    taxBanner.style.border     = '1px solid #93c5fd';
+    taxBanner.style.color      = '#1e40af';
+    taxBanner.innerHTML = `🔀 <span>Inter-state / International supply — <b>IGST</b> applicable</span>`;
+  }
+
+  // ── Table header ─────────────────────────────────────────────────────────
+  const taxCols = isSplit
+    ? `<th>CGST %</th><th>CGST Amt</th><th>SGST %</th><th>SGST Amt</th>`
+    : `<th>GST (IGST) %</th><th>IGST Amt</th>`;
+
+  head.innerHTML = `<tr>
     <th>#</th>
     <th>Description *</th>
     <th>Qty *</th>
     <th>UOM *</th>
-    <th>${isGoods?'HSN':'SAC'} *</th>
-    ${isGoods?'':'<th>Start Date</th><th>End Date</th>'}
-    <th>GST %</th>
+    <th>${isGoods ? 'HSN' : 'SAC'} *</th>
+    ${isGoods ? '' : '<th>Start Date</th><th>End Date</th>'}
+    ${taxCols}
     <th>Unit Rate (${sym}) *</th>
     <th>Subtotal</th>
-    <th>GST Amt</th>
-    <th>Total</th>
+    <th>Total (incl. tax)</th>
     <th></th>
   </tr>`;
-  const uoms=['Pcs','Nos','Kg','L','m','m²','Box','Set','Hour','Day','Month','Lump Sum'];
-  body.innerHTML=db.lineItems.map((li,i)=>{
-    const sub=(li.qty*li.rate)||0;
-    const gstAmt=sub*(li.gst/100);
-    const total=sub+gstAmt;
+
+  // ── Rows ─────────────────────────────────────────────────────────────────
+  const uoms = ['Pcs','Nos','Kg','L','m','m²','Box','Set','Hour','Day','Month','Lump Sum'];
+  body.innerHTML = db.lineItems.map((li, i) => {
+    const sub     = (li.qty * li.rate) || 0;
+    const gstPct  = li.gst || 18;
+    const gstAmt  = sub * (gstPct / 100);
+    const half    = gstAmt / 2;
+    const total   = sub + gstAmt;
+    const taxCells = isSplit
+      ? `<td><input type="number" value="${gstPct/2}" min="0" max="14" style="width:48px" readonly/>%</td>
+         <td class="calc">${sym}${half.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
+         <td><input type="number" value="${gstPct/2}" min="0" max="14" style="width:48px" readonly/>%</td>
+         <td class="calc">${sym}${half.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2})}</td>`
+      : `<td><input type="number" value="${gstPct}" min="0" max="28" style="width:55px" oninput="db.lineItems[${i}].gst=+this.value;renderLineItems()"/>%</td>
+         <td class="calc">${sym}${gstAmt.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2})}</td>`;
     return `<tr>
-      <td style="color:var(--text-3);text-align:center">${i+1}</td>
+      <td style="color:var(--text-3);text-align:center">${i + 1}</td>
       <td><input value="${li.desc}" placeholder="Item description" oninput="db.lineItems[${i}].desc=this.value"/></td>
       <td><input type="number" value="${li.qty}" min="1" style="width:60px" oninput="db.lineItems[${i}].qty=+this.value;renderLineItems()"/></td>
       <td><select onchange="db.lineItems[${i}].uom=this.value">${uoms.map(u=>`<option ${u===li.uom?'selected':''}>${u}</option>`).join('')}</select></td>
       <td><input value="${li.code||''}" placeholder="${isGoods?'HSN':'SAC'}" oninput="db.lineItems[${i}].code=this.value" style="width:80px"/></td>
-      ${isGoods?'':'<td><input type="date" style="width:120px"/></td><td><input type="date" style="width:120px"/></td>'}
-      <td><input type="number" value="${li.gst}" min="0" max="28" style="width:55px" oninput="db.lineItems[${i}].gst=+this.value;renderLineItems()"/>%</td>
+      ${isGoods ? '' : '<td><input type="date" style="width:120px"/></td><td><input type="date" style="width:120px"/></td>'}
+      ${taxCells}
       <td><input type="number" value="${li.rate}" min="0" style="width:100px" oninput="db.lineItems[${i}].rate=+this.value;renderLineItems()"/></td>
-      <td class="calc">${sym}${sub.toLocaleString('en-IN')}</td>
-      <td class="calc">${sym}${gstAmt.toLocaleString('en-IN')}</td>
-      <td class="calc" style="font-weight:600">${sym}${total.toLocaleString('en-IN')}</td>
+      <td class="calc">${sym}${sub.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
+      <td class="calc" style="font-weight:600">${sym}${total.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
       <td><button onclick="removeLineItem(${i})" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:16px;padding:4px">×</button></td>
     </tr>`;
   }).join('');
-  // Totals
-  const totSub=db.lineItems.reduce((a,li)=>a+(li.qty*li.rate),0);
-  const totGst=db.lineItems.reduce((a,li)=>a+(li.qty*li.rate*(li.gst/100)),0);
-  const totTotal=totSub+totGst;
-  const cols=isGoods?11:13;
-  foot.innerHTML=`<tr style="background:var(--surface);font-weight:700">
-    <td colspan="${cols-3}" style="padding:10px 12px;text-align:right;color:var(--text-2);font-size:13px">PO Totals</td>
-    <td class="calc" style="font-weight:700;color:var(--text)">${sym}${totSub.toLocaleString('en-IN')}</td>
-    <td class="calc" style="font-weight:700;color:var(--text)">${sym}${totGst.toLocaleString('en-IN')}</td>
-    <td class="calc" style="font-weight:700;color:var(--primary);font-size:14px">${sym}${totTotal.toLocaleString('en-IN')}</td>
-    <td></td>
-  </tr>`;
+
+  // ── Totals footer ─────────────────────────────────────────────────────────
+  const totSub    = db.lineItems.reduce((a, li) => a + (li.qty * li.rate), 0);
+  const totGst    = db.lineItems.reduce((a, li) => a + (li.qty * li.rate * (li.gst / 100)), 0);
+  const totTotal  = totSub + totGst;
+  const baseColSpan = isGoods ? (isSplit ? 9 : 7) : (isSplit ? 11 : 9);
+
+  const taxFooterCells = isSplit
+    ? `<td class="calc" style="font-weight:700;color:var(--text)">${sym}${(totGst/2).toLocaleString('en-IN',{minimumFractionDigits:2})}</td>
+       <td class="calc" style="color:var(--text-3);font-size:11px">CGST</td>
+       <td class="calc" style="font-weight:700;color:var(--text)">${sym}${(totGst/2).toLocaleString('en-IN',{minimumFractionDigits:2})}</td>
+       <td class="calc" style="color:var(--text-3);font-size:11px">SGST</td>`
+    : `<td class="calc" style="font-weight:700;color:var(--text)">${sym}${totGst.toLocaleString('en-IN',{minimumFractionDigits:2})}</td>
+       <td class="calc" style="color:var(--text-3);font-size:11px">IGST</td>`;
+
+  foot.innerHTML = `
+    <tr style="background:var(--surface);font-weight:700">
+      <td colspan="${baseColSpan}" style="padding:10px 12px;text-align:right;color:var(--text-2);font-size:13px">Subtotal</td>
+      <td class="calc" style="font-weight:700;color:var(--text)">${sym}${totSub.toLocaleString('en-IN',{minimumFractionDigits:2})}</td>
+      <td></td><td></td>
+    </tr>
+    <tr style="background:#f8fafc">
+      <td colspan="${baseColSpan}" style="padding:6px 12px;text-align:right;color:var(--text-3);font-size:12px">${isSplit ? 'CGST + SGST' : 'IGST'}</td>
+      ${taxFooterCells}
+      <td></td>
+    </tr>
+    <tr style="background:var(--primary-light);font-weight:800">
+      <td colspan="${baseColSpan}" style="padding:10px 12px;text-align:right;color:var(--primary);font-size:13px">Grand Total</td>
+      <td class="calc" style="font-weight:800;color:var(--primary);font-size:15px" colspan="2">${sym}${totTotal.toLocaleString('en-IN',{minimumFractionDigits:2})}</td>
+      <td></td>
+    </tr>`;
+
   recalcCurrencyTotal();
 }
 function addLineItem(){db.lineItems.push({desc:'',qty:1,uom:'Pcs',code:'',gst:18,rate:0});renderLineItems();}
@@ -4719,7 +4796,10 @@ function printPO(id) {
         gst: po.gst ? Math.round(po.gst/po.amount*100) : 18,
       }];
 
-  const taxType  = vendor.type==='International' ? 'IGST' : 'IGST'; // simplified
+  const taxType  = vendor.type === 'International' ? 'IGST'
+                 : (!vendor.gstin || vendor.gstin === 'N/A' || vendor.registration === 'Unregistered') ? 'IGST'
+                 : vendor.gstin.substring(0, 2) === BUYER_STATE_CODE ? 'CGST_SGST' : 'IGST';
+  const isSplit  = taxType === 'CGST_SGST';
   const taxRate  = lineItems[0] ? (lineItems[0].gst||18) : 18;
   const subtotal = po.amount;
   const gstAmt   = po.gst;
@@ -4960,7 +5040,7 @@ function printPO(id) {
               <td>
                 <div class="desc-main">${desc2}</div>
                 <div class="desc-sub">HSN/SAC CODE: ${hsnCode}</div>
-                <div class="tax-info">Taxes: ${taxType} (${gPct}.0000%)</div>
+                <div class="tax-info">Taxes: ${isSplit ? `CGST (${gPct/2}%) + SGST (${gPct/2}%)` : `IGST (${gPct}.0000%)`}</div>
               </td>
               <td>${desc2.length>18?desc2.substring(0,18)+'…':desc2}</td>
               <td>${po.endDate||'31-Mar-2026'}</td>
@@ -4977,8 +5057,14 @@ function printPO(id) {
     </div>
 
     <!-- Tax rows -->
-    <div class="tax-row"><div class="tax-label">Taxes — ${taxType} @ ${taxRate}%</div><div class="tax-val">₹${gstAmt.toLocaleString('en-IN',{minimumFractionDigits:2})}</div></div>
-    <div class="tax-row"><div class="tax-label">Total Tax</div><div class="tax-val">₹${gstAmt.toLocaleString('en-IN',{minimumFractionDigits:2})}</div></div>
+    ${isSplit ? `
+    <div class="tax-row"><div class="tax-label">CGST @ ${taxRate/2}%</div><div class="tax-val">₹${(gstAmt/2).toLocaleString('en-IN',{minimumFractionDigits:2})}</div></div>
+    <div class="tax-row"><div class="tax-label">SGST @ ${taxRate/2}%</div><div class="tax-val">₹${(gstAmt/2).toLocaleString('en-IN',{minimumFractionDigits:2})}</div></div>
+    <div class="tax-row" style="background:#f8fafc"><div class="tax-label" style="font-weight:700">Total Tax (CGST + SGST)</div><div class="tax-val" style="font-weight:700">₹${gstAmt.toLocaleString('en-IN',{minimumFractionDigits:2})}</div></div>
+    ` : `
+    <div class="tax-row"><div class="tax-label">IGST @ ${taxRate}%</div><div class="tax-val">₹${gstAmt.toLocaleString('en-IN',{minimumFractionDigits:2})}</div></div>
+    <div class="tax-row" style="background:#f8fafc"><div class="tax-label" style="font-weight:700">Total Tax (IGST)</div><div class="tax-val" style="font-weight:700">₹${gstAmt.toLocaleString('en-IN',{minimumFractionDigits:2})}</div></div>
+    `}
     <div class="grand-total-row"><div class="tax-label">Grand Total</div><div class="tax-val">₹${grandTotal.toLocaleString('en-IN',{minimumFractionDigits:2})}</div></div>
 
     <!-- Amount in words -->
