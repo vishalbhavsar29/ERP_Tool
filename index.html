@@ -1986,6 +1986,26 @@ textarea{resize:vertical;min-height:80px}
   </div>
 </div>
 
+<!-- PO DETAIL MODAL -->
+<div class="modal-overlay" id="po-detail-modal" style="display:none" onclick="if(event.target===this)this.style.display='none'">
+  <div class="modal" style="max-width:700px;width:95%;max-height:88vh">
+    <div class="modal-header">
+      <div>
+        <span class="modal-title" id="po-detail-title">PO Detail</span>
+        <span id="po-detail-badge" class="badge" style="margin-left:8px"></span>
+      </div>
+      <button class="modal-close" onclick="document.getElementById('po-detail-modal').style.display='none'">×</button>
+    </div>
+    <div class="modal-body" id="po-detail-body" style="padding:16px 20px"></div>
+    <div class="modal-footer" id="po-detail-footer"></div>
+  </div>
+</div>
+
+<!-- PRINT OVERLAY (replaces popup window — no popup blocker issues) -->
+<div id="po-print-overlay" style="display:none;position:fixed;inset:0;z-index:9000;background:#f5f5f5;overflow-y:auto">
+  <div id="po-print-content" style="max-width:820px;margin:0 auto;padding:12px 16px 40px"></div>
+</div>
+
 <!-- VENDOR ONBOARDING MODAL -->
 <div class="modal-overlay" id="vendor-modal" style="display:none" onclick="closeVendorModal(event)">
   <div class="modal" style="max-width:680px;width:95%">
@@ -3305,7 +3325,99 @@ function renderPOs(filterStatus='') {
   `).join('');
 }
 function filterPOs(val){renderPOs(val);}
-function viewPO(id){navigate('approvals');setTimeout(()=>selectPO(id),100);}
+function viewPO(id){
+  const po = db.pos.find(p=>p.id===id);
+  if(!po) return;
+  // For In Review POs → go to Approvals panel (existing workflow)
+  if(po.status === 'In Review'){
+    navigate('approvals');
+    setTimeout(()=>selectPO(id),100);
+    return;
+  }
+  // For all other statuses (Draft, Approved, Rejected, Closed) → open detail modal
+  openPODetailModal(id);
+}
+
+function openPODetailModal(id){
+  const po = db.pos.find(p=>p.id===id);
+  if(!po) return;
+
+  const statusBadge = {
+    Draft:       'badge-draft',
+    'In Review': 'badge-review',
+    Approved:    'badge-approved',
+    Rejected:    'badge-rejected',
+    Closed:      'badge-closed',
+  };
+  const fmt = n => Number(n).toLocaleString('en-IN');
+
+  document.getElementById('po-detail-title').textContent = po.id;
+  const badgeEl = document.getElementById('po-detail-badge');
+  badgeEl.className = 'badge ' + (statusBadge[po.status]||'badge-draft');
+  badgeEl.textContent = po.status;
+
+  document.getElementById('po-detail-body').innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+      ${[
+        ['PO Title',   po.title],
+        ['Vendor',     po.vendor],
+        ['Department', po.dept],
+        ['PO Type',    po.type],
+        ['Goods/Svc',  po.poType||'—'],
+        ['Created',    po.created],
+        ['Taxable Amt','₹'+fmt(po.amount)],
+        ['GST',        '₹'+fmt(po.gst)],
+        ['Grand Total','₹'+fmt(po.total)],
+        ['Linked PR',  po.prRef||'—'],
+      ].map(([k,v])=>`
+        <div style="background:var(--surface);border-radius:8px;padding:10px 12px;border:1px solid var(--border)">
+          <div style="font-size:10.5px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:3px">${k}</div>
+          <div style="font-weight:600;font-size:13px;color:var(--text)">${v}</div>
+        </div>`).join('')}
+    </div>
+    ${po.status==='Draft'?`
+    <div style="padding:10px 14px;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;font-size:12.5px;color:#92400e">
+      ⚠️ <b>Draft PO</b> — This PO has not been submitted for approval. Review the details and submit when ready, or print a draft copy for internal review.
+    </div>`:''}
+    ${po.status==='Approved'?`
+    <div style="padding:10px 14px;background:#d1fae5;border:1px solid #6ee7b7;border-radius:8px;font-size:12.5px;color:#065f46">
+      ✅ <b>Approved PO</b> — This PO has been officially approved and released. Print the final PO copy to share with the vendor.
+    </div>`:''}
+    ${po.status==='Rejected'?`
+    <div style="padding:10px 14px;background:#fee2e2;border:1px solid #fecaca;border-radius:8px;font-size:12.5px;color:#dc2626">
+      ❌ <b>Rejected PO</b> — This PO was rejected. Review comments in the Audit Log and create a revised PO if required.
+    </div>`:''}
+  `;
+
+  // Footer actions based on status
+  let footer = `<button class="btn btn-secondary" onclick="document.getElementById('po-detail-modal').style.display='none'">Close</button>`;
+
+  if(po.status === 'Draft'){
+    footer += `
+      <button class="btn btn-secondary" onclick="document.getElementById('po-detail-modal').style.display='none';printPO('${id}')">📄 Print Draft</button>
+      <button class="btn btn-primary" onclick="submitDraftPO('${id}')">Submit for Approval →</button>`;
+  } else if(po.status === 'Approved'){
+    footer += `<button class="btn btn-primary" onclick="document.getElementById('po-detail-modal').style.display='none';printPO('${id}')">🖨 Print Final PO</button>`;
+  } else if(po.status === 'Rejected'){
+    footer += `<button class="btn btn-secondary" onclick="document.getElementById('po-detail-modal').style.display='none';navigate('create-po')">+ Create New PO</button>`;
+  }
+
+  document.getElementById('po-detail-footer').innerHTML = footer;
+  document.getElementById('po-detail-modal').style.display = 'flex';
+}
+
+function submitDraftPO(id){
+  const po = db.pos.find(p=>p.id===id);
+  if(!po) return;
+  po.status = 'In Review';
+  db.auditLog.unshift({ts:new Date().toLocaleString(),event:'Submit',entity:'Purchase Order',entityId:id,actor:document.getElementById('user-name-sidebar').textContent,role:currentRole,detail:`Draft PO submitted for approval`});
+  document.getElementById('po-detail-modal').style.display='none';
+  renderPOs();
+  renderDashboard();
+  toast(`${id} submitted for approval`,'success');
+  navigate('approvals');
+  setTimeout(()=>selectPO(id),150);
+}
 
 // ===== CREATE PO =====
 function initCreatePO() {
@@ -3719,13 +3831,14 @@ function renderApprovalDetail(id){
   const po=db.pos.find(p=>p.id===id);
   if(!po) return;
   const panel=document.getElementById('approval-detail-panel');
+  const statusBadge={'In Review':'badge-review',Approved:'badge-approved',Rejected:'badge-rejected',Draft:'badge-draft',Closed:'badge-closed'};
   panel.innerHTML=`
     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px">
       <div>
         <div style="font-size:18px;font-weight:700;letter-spacing:-0.5px">${po.id}</div>
         <div style="color:var(--text-2);font-size:13.5px;margin-top:3px">${po.title}</div>
       </div>
-      <span class="badge badge-review">${po.status}</span>
+      <span class="badge ${statusBadge[po.status]||'badge-draft'}">${po.status}</span>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
       <div style="background:var(--surface);border-radius:8px;padding:12px;border:1px solid var(--border)">
@@ -3756,15 +3869,15 @@ function renderApprovalDetail(id){
         </div>
       </div>
       <div class="approval-step">
-        <div class="step-circle current">⏳</div>
+        <div class="step-circle ${po.status==='Approved'?'done':po.status==='Rejected'?'done':po.status==='In Review'?'current':'pending'}">${po.status==='Approved'||po.status==='Rejected'?'✓':'⏳'}</div>
         <div class="step-info">
           <div class="step-name">Department Approver</div>
-          <div class="step-who">Ravi Sharma · Pending since ${po.created}</div>
-          <div class="step-comment">Awaiting review from Dept Approver</div>
+          <div class="step-who">Ravi Sharma · ${po.status==='In Review'?'Pending since '+po.created:po.status==='Approved'?'Approved':'—'}</div>
+          ${po.status==='In Review'?'<div class="step-comment">Awaiting review from Dept Approver</div>':''}
         </div>
       </div>
       <div class="approval-step">
-        <div class="step-circle pending">3</div>
+        <div class="step-circle ${po.status==='Approved'?'done':'pending'}">3</div>
         <div class="step-info">
           <div class="step-name">Head of Procurement</div>
           <div class="step-who">Vishal Bhavsar · Final approval</div>
@@ -3773,10 +3886,14 @@ function renderApprovalDetail(id){
     </div>
 
     <div style="display:flex;gap:10px;flex-wrap:wrap">
-      <button class="btn btn-success" onclick="doAction('${id}','approve')">✅ Approve</button>
-      <button class="btn btn-warning" onclick="doAction('${id}','sendback')">↩️ Send Back</button>
-      <button class="btn btn-danger" onclick="doAction('${id}','reject')">❌ Reject</button>
-      <button class="btn btn-secondary" onclick="printPO('${id}')" style="margin-left:auto">📄 Print Draft PO</button>
+      ${po.status==='In Review'?`
+        <button class="btn btn-success" onclick="doAction('${id}','approve')">✅ Approve</button>
+        <button class="btn btn-warning" onclick="doAction('${id}','sendback')">↩️ Send Back</button>
+        <button class="btn btn-danger" onclick="doAction('${id}','reject')">❌ Reject</button>
+      `:''}
+      <button class="btn btn-secondary" onclick="printPO('${id}')" style="margin-left:auto">
+        ${po.status==='Approved'?'🖨 Final PO':'📄 Draft PO'}
+      </button>
     </div>
   `;
 }
@@ -4893,6 +5010,8 @@ function printPO(id) {
   const isSplit  = taxType === 'CGST_SGST';
   const isVAT    = taxType === 'VAT';
   const taxRate  = lineItems[0] ? (lineItems[0].gst||18) : 18;
+  // Currency symbol — use stored symbol from db if foreign, else ₹
+  const sym      = (db.currencyCode && db.currencyCode !== 'INR') ? (db.currencySymbol || '$') : '₹';
   const subtotal = po.amount;
   const gstAmt   = po.gst;
   const grandTotal = po.total;
@@ -5036,8 +5155,9 @@ function printPO(id) {
 
   /* ── Section header ─────────────────────────────────────── */
   .sec-hdr{
-    padding:5px 12px;background:#f1f5f9;border-bottom:1px solid #ddd;
+    padding:5px 12px;background:#f1f5f9 !important;border-bottom:1px solid #ddd;
     font-size:8px;font-weight:800;color:#475569;text-transform:uppercase;letter-spacing:0.8px;
+    -webkit-print-color-adjust:exact;print-color-adjust:exact;
   }
 
   /* ── Line items table ───────────────────────────────────── */
@@ -5045,7 +5165,9 @@ function printPO(id) {
   table.items thead tr{background:#1a1a2e}
   table.items th{
     padding:5px 7px;text-align:left;font-size:8px;font-weight:700;
-    color:#fff;white-space:nowrap;border-right:1px solid #334155;
+    color:#fff !important;background:#1a1a2e !important;
+    white-space:nowrap;border-right:1px solid #334155;
+    -webkit-print-color-adjust:exact;print-color-adjust:exact;
   }
   table.items th:last-child{border-right:none}
   table.items th.r,table.items td.r{text-align:right}
@@ -5332,12 +5454,86 @@ function printPO(id) {
 </body>
 </html>`;
 
-  const win = window.open('', '_blank', 'width=900,height=760,scrollbars=yes,resizable=yes');
-  if(!win){ toast('Pop-up blocked — please allow pop-ups for this site','error'); return; }
-  win.document.open();
-  win.document.write(html);
-  win.document.close();
-  win.focus();
+  // ── Render in-page overlay (no popup blocker) ──
+  const overlay  = document.getElementById('po-print-overlay');
+  const container= document.getElementById('po-print-content');
+
+  // Inject action bar + document into the overlay
+  container.innerHTML = `
+    <div class="no-print" style="
+      display:flex;align-items:center;justify-content:space-between;
+      background:#0f172a;color:#fff;
+      padding:10px 16px;border-radius:8px;margin-bottom:14px;gap:12px
+    ">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-size:14px;font-weight:700">${po.id}</span>
+        <span style="padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;
+          background:${isApproved?'#dcfce7':'#fef3c7'};
+          color:${isApproved?'#065f46':'#92400e'}">${poStatusLabel}</span>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button onclick="window.print()" style="padding:7px 18px;border-radius:20px;background:#22c55e;color:#fff;border:none;cursor:pointer;font-size:13px;font-weight:700">🖨 Print / Save PDF</button>
+        <button onclick="closePrintOverlay()" style="padding:7px 18px;border-radius:20px;background:#475569;color:#fff;border:none;cursor:pointer;font-size:13px;font-weight:700">✕ Close</button>
+      </div>
+    </div>
+  ` + html.replace(/^[\s\S]*?<body[^>]*>/,'').replace(/<\/body>[\s\S]*$/,'')
+         .replace(/<div class="action-bar no-print">[\s\S]*?<\/div>\s*<\/div>/,'')
+         .replace(/<div class="page-footer[^"]*">[\s\S]*?<\/div>/,'');
+
+  overlay.style.display = 'block';
+  overlay.scrollTop = 0;
+
+  // Inject the PO's CSS into the overlay's doc context via a style tag
+  // Scope all rules to #po-print-content to avoid clashing with main app styles
+  const rawCSS = html.match(/<style>([\s\S]*?)<\/style>/)?.[1] || '';
+  const scopedCSS = rawCSS
+    .replace(/@media print\{[\s\S]*?\}/g, m => m) // keep @media print as-is
+    .replace(/@page\{[\s\S]*?\}/g, m => m)          // keep @page as-is
+    .replace(/(\*)\s*\{/g, '#po-print-content *{')  // scope * selector
+    .replace(/\bbody\b/g, '#po-print-content')       // scope body → container
+    .replace(/\.wrapper/g, '#po-print-content .wrapper')
+    .replace(/\.doc\b/g, '#po-print-content .doc')
+    .replace(/\.ribbon/g, '#po-print-content .ribbon')
+    .replace(/\.doc-head/g, '#po-print-content .doc-head')
+    .replace(/\.po-title/g, '#po-print-content .po-title')
+    .replace(/\.po-meta/g, '#po-print-content .po-meta')
+    .replace(/\.addr-row/g, '#po-print-content .addr-row')
+    .replace(/\.addr-cell/g, '#po-print-content .addr-cell')
+    .replace(/\.vd-strip/g, '#po-print-content .vd-strip')
+    .replace(/\.sec-hdr/g, '#po-print-content .sec-hdr')
+    .replace(/table\.items/g, '#po-print-content table.items')
+    .replace(/\.desc-main/g, '#po-print-content .desc-main')
+    .replace(/\.desc-sub/g, '#po-print-content .desc-sub')
+    .replace(/\.tax-info/g, '#po-print-content .tax-info')
+    .replace(/\.tax-block/g, '#po-print-content .tax-block')
+    .replace(/\.tax-row\b/g, '#po-print-content .tax-row')
+    .replace(/\.tax-lbl/g, '#po-print-content .tax-lbl')
+    .replace(/\.tax-val/g, '#po-print-content .tax-val')
+    .replace(/\.grand-row/g, '#po-print-content .grand-row')
+    .replace(/\.amt-words/g, '#po-print-content .amt-words')
+    .replace(/\.terms\b/g, '#po-print-content .terms')
+    .replace(/\.terms-grid/g, '#po-print-content .terms-grid')
+    .replace(/\.tnc\b/g, '#po-print-content .tnc')
+    .replace(/\.annexure/g, '#po-print-content .annexure')
+    .replace(/\.sig-bar/g, '#po-print-content .sig-bar')
+    .replace(/\.sig-left/g, '#po-print-content .sig-left')
+    .replace(/\.sig-right/g, '#po-print-content .sig-right')
+    .replace(/\.logo-zone/g, '#po-print-content .logo-zone')
+    .replace(/\.buyer-info/g, '#po-print-content .buyer-info')
+    .replace(/\.action-bar\b/g, '#po-print-content .action-bar');
+
+  if(!document.getElementById('po-print-style')){
+    const styleTag = document.createElement('style');
+    styleTag.id = 'po-print-style';
+    styleTag.textContent = scopedCSS;
+    document.head.appendChild(styleTag);
+  } else {
+    document.getElementById('po-print-style').textContent = scopedCSS;
+  }
+}
+
+function closePrintOverlay(){
+  document.getElementById('po-print-overlay').style.display='none';
 }
 
 // ===== EXPORT CENTER =====
@@ -5746,14 +5942,22 @@ function runExport(){
   }
   else if(fmt==='pdf-print'){
     const htmlStr=buildHTMLReport(rptTitle,schema,data,cols,inclTS,inclSummary,fmtCurrency,tsStr,true);
-    const win=window.open('','_blank','width=1000,height=760,scrollbars=yes');
-    if(!win){ toast('Pop-up blocked — please allow pop-ups','error'); return; }
-    win.document.open();
-    win.document.write(htmlStr);
-    win.document.close();
-    win.focus();
-    setTimeout(()=>win.print(),600);
-    toast(`✅ Print dialog opened — save as PDF`,'success');
+    const overlay  = document.getElementById('po-print-overlay');
+    const container= document.getElementById('po-print-content');
+    container.innerHTML = `
+      <div class="no-print" style="display:flex;align-items:center;justify-content:space-between;background:#0f172a;color:#fff;padding:10px 16px;border-radius:8px;margin-bottom:14px;gap:12px">
+        <span style="font-size:14px;font-weight:700">${rptTitle}</span>
+        <div style="display:flex;gap:8px">
+          <button onclick="window.print()" style="padding:7px 18px;border-radius:20px;background:#22c55e;color:#fff;border:none;cursor:pointer;font-size:13px;font-weight:700">🖨 Print / Save PDF</button>
+          <button onclick="closePrintOverlay()" style="padding:7px 18px;border-radius:20px;background:#475569;color:#fff;border:none;cursor:pointer;font-size:13px;font-weight:700">✕ Close</button>
+        </div>
+      </div>` + htmlStr.replace(/^[\s\S]*?<body[^>]*>/,'').replace(/<\/body>[\s\S]*$/,'');
+    if(!document.getElementById('po-print-style')){
+      const st=document.createElement('style'); st.id='po-print-style';
+      st.textContent=htmlStr.match(/<style>([\s\S]*?)<\/style>/)?.[1]||''; document.head.appendChild(st);
+    } else { document.getElementById('po-print-style').textContent=htmlStr.match(/<style>([\s\S]*?)<\/style>/)?.[1]||''; }
+    overlay.style.display='block'; overlay.scrollTop=0;
+    toast(`✅ Report ready — click Print / Save PDF`,'success');
   }
 
   db.auditLog.unshift({ts:new Date().toLocaleString(),event:'Export',entity:schema.label,entityId:fname,actor:document.getElementById('user-name-sidebar').textContent,role:currentRole,detail:`${data.length} records exported as ${fmt.toUpperCase()}`});
@@ -5813,7 +6017,7 @@ function buildHTMLReport(title,schema,data,cols,inclTS,inclSummary,fmtCurrency,t
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:Arial,sans-serif;font-size:11px;color:#111;background:#fff;padding:${forPrint?'0':'20px'}}
 @page{size:A4 landscape;margin:10mm}
-@media print{.no-print{display:none!important}}
+@media print{.no-print{display:none!important}body>*:not(#po-print-overlay){display:none!important}#po-print-overlay{display:block!important;position:static!important;background:#fff!important;overflow:visible!important}#po-print-content{padding:0!important}}
 .wrapper{max-width:1100px;margin:0 auto}
 .action-bar{background:#0f172a;color:#fff;padding:10px 18px;border-radius:8px;margin-bottom:18px;display:flex;align-items:center;justify-content:space-between}
 .action-bar h1{font-size:15px;font-weight:800}
