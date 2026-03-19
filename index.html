@@ -923,21 +923,19 @@ textarea{resize:vertical;min-height:80px}
 
     <!-- APPROVALS PAGE -->
     <div class="page" id="page-approvals">
-      <div class="grid-2" style="gap:16px">
-        <div class="card">
-          <div class="card-header">
+      <div style="display:grid;grid-template-columns:340px 1fr;gap:16px;height:calc(100vh - 106px)">
+        <div class="card" style="overflow:hidden;display:flex;flex-direction:column">
+          <div class="card-header" style="flex-shrink:0">
             <span class="card-title">⏳ Pending Approvals</span>
             <span class="badge badge-review" id="pending-count-badge">3 pending</span>
           </div>
-          <div class="card-body" style="padding:0">
-            <div id="pending-approvals-list"></div>
-          </div>
+          <div style="flex:1;overflow-y:auto" id="pending-approvals-list"></div>
         </div>
-        <div class="card">
-          <div class="card-header">
+        <div class="card" style="overflow:hidden;display:flex;flex-direction:column">
+          <div class="card-header" style="flex-shrink:0">
             <span class="card-title">📄 PO Detail — Approval View</span>
           </div>
-          <div class="card-body" id="approval-detail-panel">
+          <div class="card-body" id="approval-detail-panel" style="flex:1;overflow-y:auto;padding:16px 18px">
             <div class="empty-state">
               <div class="icon">👈</div>
               <h3>Select a PO to review</h3>
@@ -2004,6 +2002,27 @@ textarea{resize:vertical;min-height:80px}
 <!-- PRINT OVERLAY (replaces popup window — no popup blocker issues) -->
 <div id="po-print-overlay" style="display:none;position:fixed;inset:0;z-index:9000;background:#f5f5f5;overflow-y:auto">
   <div id="po-print-content" style="max-width:820px;margin:0 auto;padding:12px 16px 40px"></div>
+</div>
+
+<!-- FILE PREVIEW MODAL -->
+<div class="modal-overlay" id="file-preview-modal" style="display:none" onclick="if(event.target===this)closeFilePreview()">
+  <div class="modal" style="max-width:700px;width:95%;max-height:90vh;display:flex;flex-direction:column">
+    <div class="modal-header" style="flex-shrink:0">
+      <div style="display:flex;align-items:center;gap:10px;min-width:0">
+        <span id="file-preview-icon" style="font-size:22px">📄</span>
+        <div style="min-width:0">
+          <div class="modal-title" id="file-preview-name" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Document</div>
+          <div id="file-preview-meta" style="font-size:11.5px;color:var(--text-3);margin-top:1px"></div>
+        </div>
+      </div>
+      <button class="modal-close" onclick="closeFilePreview()">×</button>
+    </div>
+    <div id="file-preview-body" style="flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:12px"></div>
+    <div class="modal-footer" style="flex-shrink:0;gap:8px">
+      <button class="btn btn-secondary" onclick="closeFilePreview()">Close</button>
+      <button class="btn btn-primary" onclick="downloadAttachment()" id="file-download-btn">⬇ Download</button>
+    </div>
+  </div>
 </div>
 
 <!-- VENDOR ONBOARDING MODAL -->
@@ -3828,39 +3847,168 @@ function selectPO(id){
   renderApprovalDetail(id);
 }
 function renderApprovalDetail(id){
-  const po=db.pos.find(p=>p.id===id);
+  const po = db.pos.find(p=>p.id===id);
   if(!po) return;
-  const panel=document.getElementById('approval-detail-panel');
-  const statusBadge={'In Review':'badge-review',Approved:'badge-approved',Rejected:'badge-rejected',Draft:'badge-draft',Closed:'badge-closed'};
-  panel.innerHTML=`
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px">
+  const panel = document.getElementById('approval-detail-panel');
+  const statusBadge = {'In Review':'badge-review',Approved:'badge-approved',Rejected:'badge-rejected',Draft:'badge-draft',Closed:'badge-closed'};
+  const vendor = db.vendors.find(v=>v.name===po.vendor) || {};
+  const fmt = n => Number(n).toLocaleString('en-IN');
+
+  // Vendor state code from GSTIN
+  const vendorStateCode = vendor.gstin && vendor.gstin !== 'N/A' ? vendor.gstin.substring(0,2) : '';
+  const taxType = vendor.type === 'International' ? 'VAT'
+                : (!vendor.gstin || vendor.gstin === 'N/A' || vendor.registration === 'Unregistered') ? 'IGST'
+                : vendorStateCode === BUYER_STATE_CODE ? 'CGST + SGST' : 'IGST';
+
+  // Line items for this PO (use saved lineItems or generate placeholder)
+  const lineItems = (po.lineItems && po.lineItems.length)
+    ? po.lineItems
+    : [{desc: po.title, qty:1, uom: po.poType==='services'?'Nos':'Nos', code: po.poType==='services'?'998314':'84713010', gst:18, rate: po.amount}];
+
+  // Audit history for this PO
+  const poAudit = db.auditLog.filter(l=>l.entityId===id).slice(0,5);
+
+  // Mock attachments (real system would store these)
+  const mockAttachments = po.attachments || [
+    {name:'Purchase_Requisition_'+id+'.pdf', size:'124 KB', type:'pdf', date: po.created},
+    {name:'Vendor_Quote_'+po.vendor.split(' ')[0]+'.pdf', size:'286 KB', type:'pdf', date: po.created},
+    {name:'Technical_Specs.docx', size:'48 KB', type:'doc', date: po.created},
+  ];
+
+  const fileIcon = t => t==='pdf'?'📄':t==='doc'?'📝':t==='xls'?'📊':'📎';
+
+  panel.innerHTML = `
+    <!-- ── Header ── -->
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;gap:8px">
       <div>
-        <div style="font-size:18px;font-weight:700;letter-spacing:-0.5px">${po.id}</div>
-        <div style="color:var(--text-2);font-size:13.5px;margin-top:3px">${po.title}</div>
+        <div style="font-size:17px;font-weight:800;letter-spacing:-0.4px;color:var(--text)">${po.id}</div>
+        <div style="color:var(--text-2);font-size:13px;margin-top:2px;font-weight:600">${po.title}</div>
+        <div style="color:var(--text-3);font-size:12px;margin-top:2px">${po.dept} · ${po.type} · ${po.poType==='goods'?'Goods':'Services'} · Created ${po.created}</div>
       </div>
-      <span class="badge ${statusBadge[po.status]||'badge-draft'}">${po.status}</span>
+      <span class="badge ${statusBadge[po.status]||'badge-draft'}" style="flex-shrink:0">${po.status}</span>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
-      <div style="background:var(--surface);border-radius:8px;padding:12px;border:1px solid var(--border)">
-        <div style="font-size:11.5px;color:var(--text-3);margin-bottom:4px;font-weight:600">VENDOR</div>
-        <div style="font-weight:600;font-size:13.5px">${po.vendor}</div>
+
+    <!-- ── Key Financials ── -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px">
+      <div style="background:var(--surface);border-radius:8px;padding:10px 12px;border:1px solid var(--border)">
+        <div style="font-size:10.5px;color:var(--text-3);font-weight:700;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:3px">Taxable Amt</div>
+        <div style="font-weight:700;font-size:14px;font-family:'DM Mono',monospace">₹${fmt(po.amount)}</div>
       </div>
-      <div style="background:var(--surface);border-radius:8px;padding:12px;border:1px solid var(--border)">
-        <div style="font-size:11.5px;color:var(--text-3);margin-bottom:4px;font-weight:600">TOTAL AMOUNT</div>
-        <div style="font-weight:700;font-size:16px;font-family:'DM Mono',monospace;color:var(--primary)">₹${po.total.toLocaleString('en-IN')}</div>
+      <div style="background:var(--surface);border-radius:8px;padding:10px 12px;border:1px solid var(--border)">
+        <div style="font-size:10.5px;color:var(--text-3);font-weight:700;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:3px">GST (${taxType})</div>
+        <div style="font-weight:700;font-size:14px;font-family:'DM Mono',monospace">₹${fmt(po.gst)}</div>
       </div>
-      <div style="background:var(--surface);border-radius:8px;padding:12px;border:1px solid var(--border)">
-        <div style="font-size:11.5px;color:var(--text-3);margin-bottom:4px;font-weight:600">DEPARTMENT</div>
-        <div style="font-weight:600;font-size:13.5px">${po.dept}</div>
-      </div>
-      <div style="background:var(--surface);border-radius:8px;padding:12px;border:1px solid var(--border)">
-        <div style="font-size:11.5px;color:var(--text-3);margin-bottom:4px;font-weight:600">PO TYPE</div>
-        <div style="font-weight:600;font-size:13.5px">${po.type}</div>
+      <div style="background:var(--primary-light);border-radius:8px;padding:10px 12px;border:1.5px solid var(--primary)">
+        <div style="font-size:10.5px;color:var(--primary);font-weight:700;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:3px">Grand Total</div>
+        <div style="font-weight:800;font-size:15px;font-family:'DM Mono',monospace;color:var(--primary)">₹${fmt(po.total)}</div>
       </div>
     </div>
 
-    <div class="section-label">Approval Timeline</div>
-    <div style="margin-bottom:20px">
+    <!-- ── Vendor Info ── -->
+    <div style="background:var(--surface);border-radius:8px;padding:10px 14px;border:1px solid var(--border);margin-bottom:14px">
+      <div style="font-size:10.5px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">Vendor Details</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:12.5px">
+        <div><span style="color:var(--text-3)">Name: </span><b>${po.vendor}</b></div>
+        <div><span style="color:var(--text-3)">Type: </span><b>${vendor.type||'—'}</b></div>
+        <div><span style="color:var(--text-3)">GSTIN: </span><code style="font-family:'DM Mono',monospace;font-size:11.5px;color:var(--primary)">${vendor.gstin||'—'}</code></div>
+        <div><span style="color:var(--text-3)">PAN: </span><code style="font-family:'DM Mono',monospace;font-size:11.5px">${vendor.pan||'—'}</code></div>
+        <div><span style="color:var(--text-3)">Category: </span><b>${vendor.category||'—'}</b></div>
+        <div><span style="color:var(--text-3)">Tax Treatment: </span>
+          <span style="font-weight:700;color:${taxType==='CGST + SGST'?'var(--success)':'var(--primary)'}">${taxType}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Line Items ── -->
+    <div style="margin-bottom:14px">
+      <div style="font-size:10.5px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">Line Items</div>
+      <div style="overflow-x:auto;border-radius:8px;border:1px solid var(--border)">
+        <table style="width:100%;border-collapse:collapse;font-size:12px">
+          <thead>
+            <tr style="background:var(--sidebar)">
+              <th style="padding:7px 10px;text-align:left;color:#94a3b8;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.4px">#</th>
+              <th style="padding:7px 10px;text-align:left;color:#94a3b8;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.4px">Description</th>
+              <th style="padding:7px 10px;text-align:left;color:#94a3b8;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.4px">HSN/SAC</th>
+              <th style="padding:7px 10px;text-align:center;color:#94a3b8;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.4px">Qty</th>
+              <th style="padding:7px 10px;text-align:center;color:#94a3b8;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.4px">UOM</th>
+              <th style="padding:7px 10px;text-align:right;color:#94a3b8;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.4px">Rate (₹)</th>
+              <th style="padding:7px 10px;text-align:center;color:#94a3b8;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.4px">GST %</th>
+              <th style="padding:7px 10px;text-align:right;color:#94a3b8;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.4px">Total (₹)</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${lineItems.map((li,i)=>{
+              const sub = (li.qty||1)*(li.rate||0);
+              const tax = sub*((li.gst||18)/100);
+              return `<tr style="border-top:1px solid var(--border);${i%2?'background:var(--surface)':''}">
+                <td style="padding:7px 10px;color:var(--text-3);text-align:center">${i+1}</td>
+                <td style="padding:7px 10px;font-weight:600;color:var(--text)">${li.desc||po.title}</td>
+                <td style="padding:7px 10px;font-family:'DM Mono',monospace;font-size:11px;color:var(--text-3)">${li.code||li.hsnSac||'—'}</td>
+                <td style="padding:7px 10px;text-align:center;font-weight:600">${li.qty||1}</td>
+                <td style="padding:7px 10px;text-align:center;color:var(--text-3)">${li.uom||'Nos'}</td>
+                <td style="padding:7px 10px;text-align:right;font-family:'DM Mono',monospace">₹${fmt(li.rate||0)}</td>
+                <td style="padding:7px 10px;text-align:center">
+                  <span style="background:${(li.gst||18)===0?'#f3f4f6':'#dbeafe'};color:${(li.gst||18)===0?'#6b7280':'#1e40af'};padding:2px 8px;border-radius:12px;font-size:11.5px;font-weight:700">${li.gst||18}%</span>
+                </td>
+                <td style="padding:7px 10px;text-align:right;font-family:'DM Mono',monospace;font-weight:700;color:var(--primary)">₹${fmt(sub+tax)}</td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+          <tfoot>
+            <tr style="background:var(--primary-light);border-top:2px solid var(--primary)">
+              <td colspan="7" style="padding:8px 10px;text-align:right;font-weight:700;font-size:12.5px;color:var(--primary)">Grand Total</td>
+              <td style="padding:8px 10px;text-align:right;font-family:'DM Mono',monospace;font-weight:800;font-size:14px;color:var(--primary)">₹${fmt(po.total)}</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── Attachments ── -->
+    <div style="margin-bottom:14px">
+      <div style="font-size:10.5px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">
+        📎 Attachments <span style="font-size:10px;font-weight:500;color:var(--text-3)">(${mockAttachments.length} file${mockAttachments.length!==1?'s':''})</span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        ${mockAttachments.map((f,fi)=>`
+          <div style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--surface);border:1px solid var(--border);border-radius:8px;transition:border-color 0.12s"
+               onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='var(--border)'">
+
+            <!-- File icon + info -->
+            <div style="width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;
+              background:${f.type==='pdf'?'#fee2e2':f.type==='doc'?'#dbeafe':f.type==='xls'?'#d1fae5':'#f3f4f6'}">
+              ${fileIcon(f.type)}
+            </div>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:12.5px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${f.name}</div>
+              <div style="font-size:11px;color:var(--text-3);margin-top:1px">
+                <span style="background:${f.type==='pdf'?'#fee2e2':f.type==='doc'?'#dbeafe':'#f3f4f6'};color:${f.type==='pdf'?'#dc2626':f.type==='doc'?'#1d4ed8':'#4b5563'};padding:1px 6px;border-radius:4px;font-size:10px;font-weight:700;text-transform:uppercase;margin-right:6px">${f.type}</span>
+                ${f.size} · Uploaded ${f.date}
+              </div>
+            </div>
+
+            <!-- Action buttons -->
+            <div style="display:flex;gap:6px;flex-shrink:0">
+              <button onclick="previewAttachment(${fi},'${id}')"
+                style="display:flex;align-items:center;gap:5px;padding:5px 12px;border-radius:7px;border:1.5px solid var(--border);background:#fff;color:var(--text-2);font-size:12px;font-weight:600;cursor:pointer;transition:all 0.12s"
+                onmouseover="this.style.borderColor='var(--primary)';this.style.color='var(--primary)'"
+                onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-2)'">
+                👁 Preview
+              </button>
+              <button onclick="downloadAttachmentDirect(${fi},'${id}')"
+                style="display:flex;align-items:center;gap:5px;padding:5px 12px;border-radius:7px;border:1.5px solid var(--primary);background:var(--primary);color:#fff;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.12s"
+                onmouseover="this.style.background='var(--primary-dark)'" onmouseout="this.style.background='var(--primary)'">
+                ⬇ Download
+              </button>
+            </div>
+
+          </div>`).join('')}
+      </div>
+    </div>
+
+    <!-- ── Approval Timeline ── -->
+    <div style="margin-bottom:14px">
+      <div style="font-size:10.5px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">Approval Timeline</div>
       <div class="approval-step">
         <div class="step-circle done">✓</div>
         <div class="step-info">
@@ -3885,7 +4033,27 @@ function renderApprovalDetail(id){
       </div>
     </div>
 
-    <div style="display:flex;gap:10px;flex-wrap:wrap">
+    <!-- ── Audit Trail ── -->
+    ${poAudit.length?`
+    <div style="margin-bottom:16px">
+      <div style="font-size:10.5px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">Activity Log</div>
+      <div style="border:1px solid var(--border);border-radius:8px;overflow:hidden">
+        ${poAudit.map((l,i)=>`
+          <div style="display:flex;align-items:flex-start;gap:10px;padding:8px 12px;${i>0?'border-top:1px solid var(--border)':''}${i%2?'background:var(--surface)':''}">
+            <div style="font-size:16px;flex-shrink:0;margin-top:1px">${
+              l.event==='Approve'?'✅':l.event==='Reject'?'❌':l.event==='Submit'?'📤':l.event==='Send Back'?'↩️':'📋'
+            }</div>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:12.5px;font-weight:600;color:var(--text)">${l.event} <span style="color:var(--text-3);font-weight:400">by ${l.actor}</span> <span style="font-size:11px;color:var(--text-3)">(${l.role})</span></div>
+              ${l.detail?`<div style="font-size:11.5px;color:var(--text-2);margin-top:2px">${l.detail}</div>`:''}
+              <div style="font-size:11px;color:var(--text-3);margin-top:2px;font-family:'DM Mono',monospace">${l.ts}</div>
+            </div>
+          </div>`).join('')}
+      </div>
+    </div>`:''}
+
+    <!-- ── Action Buttons ── -->
+    <div style="display:flex;gap:8px;flex-wrap:wrap;padding-top:4px;border-top:1px solid var(--border)">
       ${po.status==='In Review'?`
         <button class="btn btn-success" onclick="doAction('${id}','approve')">✅ Approve</button>
         <button class="btn btn-warning" onclick="doAction('${id}','sendback')">↩️ Send Back</button>
@@ -3897,6 +4065,113 @@ function renderApprovalDetail(id){
     </div>
   `;
 }
+// ===== ATTACHMENT PREVIEW & DOWNLOAD =====
+let _currentPreviewFile = null;
+
+function getAttachmentsForPO(poId) {
+  const po = db.pos.find(p=>p.id===poId);
+  if(!po) return [];
+  return po.attachments || [
+    {name:'Purchase_Requisition_'+poId+'.pdf', size:'124 KB', type:'pdf', date: po.created, pages:2},
+    {name:'Vendor_Quote_'+po.vendor.split(' ')[0]+'.pdf', size:'286 KB', type:'pdf', date: po.created, pages:4},
+    {name:'Technical_Specs.docx', size:'48 KB', type:'doc', date: po.created, pages:3},
+  ];
+}
+
+function previewAttachment(fileIdx, poId) {
+  const files = getAttachmentsForPO(poId);
+  const f = files[fileIdx];
+  if(!f) return;
+  _currentPreviewFile = {f, poId, fileIdx};
+
+  const fileIconBig = f.type==='pdf'?'\u{1F4C4}':f.type==='doc'?'\u{1F4DD}':f.type==='xls'?'\u{1F4CA}':'\u{1F4CE}';
+
+  document.getElementById('file-preview-icon').textContent = fileIconBig;
+  document.getElementById('file-preview-name').textContent = f.name;
+  document.getElementById('file-preview-meta').textContent = f.type.toUpperCase() + ' \u00B7 ' + f.size + ' \u00B7 Uploaded ' + f.date;
+  document.getElementById('file-download-btn').onclick = () => downloadAttachmentDirect(fileIdx, poId);
+
+  const body = document.getElementById('file-preview-body');
+  const pages = f.pages || 2;
+  const po = db.pos.find(p=>p.id===poId) || {};
+  const vendor = db.vendors.find(v=>v.name===po.vendor) || {};
+  const fmt = n => Number(n||0).toLocaleString('en-IN');
+
+  let docHtml = '';
+  if(f.name.includes('Requisition') || f.name.includes('PR')) {
+    docHtml = '<div style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:16px;font-size:13px;line-height:1.7">'
+      + '<div style="font-size:15px;font-weight:800;color:var(--text);border-bottom:2px solid var(--border);padding-bottom:8px;margin-bottom:12px">PURCHASE REQUISITION — ' + poId + '</div>'
+      + '<div style="display:grid;grid-template-columns:140px 1fr;row-gap:6px;margin-bottom:12px;font-size:12.5px">'
+      + '<span style="color:var(--text-3);font-weight:600">PR Date</span><span>' + (po.created||'—') + '</span>'
+      + '<span style="color:var(--text-3);font-weight:600">Department</span><span>' + (po.dept||'—') + '</span>'
+      + '<span style="color:var(--text-3);font-weight:600">Vendor</span><span>' + (po.vendor||'—') + '</span>'
+      + '<span style="color:var(--text-3);font-weight:600">Amount</span><span style="font-weight:700;color:var(--primary)">\u20B9' + fmt(po.total) + '</span>'
+      + '<span style="color:var(--text-3);font-weight:600">Justification</span><span>Business requirement as per Q1 procurement plan. Budget allocated under ' + (po.dept||'') + ' cost centre.</span>'
+      + '</div>'
+      + '<div style="background:var(--surface);border-radius:6px;padding:10px 12px;font-size:12px;color:var(--text-2)"><b>Note:</b> This requisition has been verified and approved by the department head.</div>'
+      + '</div>';
+  } else if(f.name.includes('Quote') || f.name.includes('Vendor')) {
+    docHtml = '<div style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:16px;font-size:13px;line-height:1.7">'
+      + '<div style="font-size:15px;font-weight:800;color:var(--text);border-bottom:2px solid var(--border);padding-bottom:8px;margin-bottom:12px">VENDOR QUOTATION — ' + (po.vendor||'') + '</div>'
+      + '<div style="display:grid;grid-template-columns:140px 1fr;row-gap:6px;margin-bottom:12px;font-size:12.5px">'
+      + '<span style="color:var(--text-3);font-weight:600">Vendor</span><span>' + (po.vendor||'—') + '</span>'
+      + '<span style="color:var(--text-3);font-weight:600">GSTIN</span><code style="font-family:monospace;font-size:11.5px">' + (vendor.gstin||'—') + '</code>'
+      + '<span style="color:var(--text-3);font-weight:600">Quote Date</span><span>' + (po.created||'—') + '</span>'
+      + '<span style="color:var(--text-3);font-weight:600">Valid Until</span><span>31-Mar-2026</span>'
+      + '<span style="color:var(--text-3);font-weight:600">Quoted Amount</span><span style="font-weight:700;color:var(--primary)">\u20B9' + fmt(po.total) + '</span>'
+      + '<span style="color:var(--text-3);font-weight:600">Payment Terms</span><span>Net 30 days from invoice</span>'
+      + '</div>'
+      + '<div style="background:#fffbeb;border:1px solid #fde68a;border-radius:6px;padding:10px 12px;font-size:12px;color:#92400e"><b>Price Validity:</b> Prices valid for 60 days from quote date. GST as applicable.</div>'
+      + '</div>';
+  } else {
+    docHtml = '<div style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:16px;font-size:13px;line-height:1.7">'
+      + '<div style="font-size:15px;font-weight:800;color:var(--text);border-bottom:2px solid var(--border);padding-bottom:8px;margin-bottom:12px">TECHNICAL SPECIFICATIONS — ' + (po.title||'') + '</div>'
+      + '<div style="font-size:12.5px;color:var(--text-2);line-height:1.8">'
+      + '<p style="margin-bottom:8px"><b>Scope:</b> Technical requirements for <b>' + (po.title||'') + '</b>.</p>'
+      + '<p style="margin-bottom:8px"><b>Department:</b> ' + (po.dept||'') + '</p>'
+      + '<p style="margin-bottom:8px"><b>Delivery:</b> Head Office — Mumbai. Prior inspection required.</p>'
+      + '<p style="margin-bottom:8px"><b>Quality:</b> All goods must comply with BIS / ISO standards.</p>'
+      + '<p><b>Warranty:</b> Minimum 12-month onsite warranty. Support SLA as per contract.</p>'
+      + '</div></div>';
+  }
+
+  body.innerHTML = '<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;color:var(--text-3);margin-bottom:12px">'
+    + '<div style="font-size:32px;margin-bottom:6px">' + fileIconBig + '</div>'
+    + '<div style="font-size:13.5px;font-weight:700;color:var(--text);margin-bottom:3px">' + f.name + '</div>'
+    + '<div style="font-size:12px">' + f.type.toUpperCase() + ' \u00B7 ' + f.size + ' \u00B7 ' + pages + ' page' + (pages>1?'s':'') + '</div>'
+    + '</div>' + docHtml;
+
+  document.getElementById('file-preview-modal').style.display = 'flex';
+}
+
+function closeFilePreview() {
+  document.getElementById('file-preview-modal').style.display = 'none';
+  _currentPreviewFile = null;
+}
+
+function downloadAttachment() {
+  if(!_currentPreviewFile) return;
+  const {fileIdx, poId} = _currentPreviewFile;
+  downloadAttachmentDirect(fileIdx, poId);
+}
+
+function downloadAttachmentDirect(fileIdx, poId) {
+  const files = getAttachmentsForPO(poId);
+  const f = files[fileIdx];
+  if(!f) return;
+  const po = db.pos.find(p=>p.id===poId) || {};
+  const content = 'DOCUMENT: ' + f.name + '\nPO: ' + poId + '\nUploaded: ' + f.date + '\nSize: ' + f.size + '\n\n[In a live system, the actual ' + f.type.toUpperCase() + ' file would be downloaded here.]\n\nPO Title: ' + (po.title||'') + '\nVendor: ' + (po.vendor||'') + '\nAmount: \u20B9' + Number(po.total||0).toLocaleString('en-IN');
+  const blob = new Blob([content], {type:'text/plain'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = f.name.replace(/\.(pdf|docx?|xlsx?)$/, '.txt');
+  a.style.display = 'none';
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url), 2000);
+  toast('\u2B07 Downloading ' + f.name, 'success');
+}
+
 function doAction(id,type){
   db.currentAction={poId:id,type};
   const titles={approve:'Approve PO',sendback:'Send Back for Clarification',reject:'Reject PO'};
