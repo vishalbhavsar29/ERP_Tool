@@ -205,6 +205,16 @@ textarea{resize:vertical;min-height:80px}
 /* Export Center page: fill viewport height */
 #page-export-center.active{display:flex!important;flex-direction:column;padding:0;overflow:hidden;height:calc(100vh - 58px)}
 
+/* VENDOR INVOICE STEPS */
+.vendor-step{display:flex;flex-direction:column;align-items:center;gap:4px;flex:1}
+.vstep-circle{width:30px;height:30px;border-radius:50%;border:2.5px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--text-3);background:#fff;transition:all 0.2s}
+.vstep-label{font-size:11px;font-weight:600;color:var(--text-3);text-align:center;white-space:nowrap;transition:color 0.2s}
+.vstep-line{flex:1;height:2px;background:var(--border);transition:background 0.2s;margin:0 4px;margin-bottom:20px}
+.vendor-step.active .vstep-circle{background:var(--primary);border-color:var(--primary);color:#fff}
+.vendor-step.active .vstep-label{color:var(--primary)}
+.vendor-step.done .vstep-circle{background:var(--success);border-color:var(--success);color:#fff}
+.vendor-step.done .vstep-label{color:var(--success)}
+.vstep-line.active,.vstep-line.done{background:var(--primary)}
 .aging-bar{height:8px;border-radius:4px;background:var(--border);overflow:hidden;margin-top:6px}
 .aging-fill{height:100%;border-radius:4px;transition:width 0.5s}
 /* NOTIFICATION DOT */
@@ -719,6 +729,139 @@ textarea{resize:vertical;min-height:80px}
                 <label>PO Date <span class="req">*</span></label>
                 <input type="date" value="2026-03-19"/>
               </div>
+            </div>
+
+            <!-- Head of Expenses -->
+            <div style="margin-top:18px;padding-top:16px;border-top:1px solid var(--border)">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+                <span style="font-size:15px">💼</span>
+                <div style="font-size:13px;font-weight:700;color:var(--text)">Head of Expenses</div>
+                <span style="font-size:11px;color:var(--text-3);background:var(--surface);border:1px solid var(--border);padding:2px 8px;border-radius:10px;margin-left:4px">For accounting &amp; budget allocation</span>
+              </div>
+              <div class="form-grid-3">
+
+                <div class="form-group">
+                  <label>Expense Category <span class="req">*</span></label>
+                  <select id="po-expense-category" onchange="updateExpenseSubcategory()">
+                    <option value="">— Select Category —</option>
+                    <optgroup label="Capital Expenditure (CapEx)">
+                      <option value="capex-it">CapEx — IT Hardware &amp; Infrastructure</option>
+                      <option value="capex-plant">CapEx — Plant &amp; Machinery</option>
+                      <option value="capex-furniture">CapEx — Furniture &amp; Fixtures</option>
+                      <option value="capex-vehicle">CapEx — Vehicles</option>
+                      <option value="capex-building">CapEx — Building / Civil Works</option>
+                      <option value="capex-other">CapEx — Other Capital Assets</option>
+                    </optgroup>
+                    <optgroup label="Operating Expenditure (OpEx)">
+                      <option value="opex-it">OpEx — IT &amp; Software Subscriptions</option>
+                      <option value="opex-marketing">OpEx — Marketing &amp; Advertising</option>
+                      <option value="opex-office">OpEx — Office Supplies &amp; Stationery</option>
+                      <option value="opex-travel">OpEx — Travel &amp; Accommodation</option>
+                      <option value="opex-utilities">OpEx — Utilities &amp; Rent</option>
+                      <option value="opex-professional">OpEx — Professional &amp; Consulting Fees</option>
+                      <option value="opex-maintenance">OpEx — Repairs &amp; Maintenance</option>
+                      <option value="opex-hr">OpEx — HR &amp; Recruitment</option>
+                      <option value="opex-logistics">OpEx — Logistics &amp; Freight</option>
+                      <option value="opex-other">OpEx — Other Operating Expenses</option>
+                    </optgroup>
+                    <optgroup label="Cost of Goods Sold (COGS)">
+                      <option value="cogs-raw">COGS — Raw Materials</option>
+                      <option value="cogs-packaging">COGS — Packaging Materials</option>
+                      <option value="cogs-direct">COGS — Direct Labour &amp; Services</option>
+                    </optgroup>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label>Expense Sub-Head</label>
+                  <select id="po-expense-subhead">
+                    <option value="">— Select category first —</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label>Expense Type</label>
+                  <select id="po-expense-type">
+                    <option>Budgeted</option>
+                    <option>Unbudgeted — With Approval</option>
+                    <option>Emergency / Urgent</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label>GL Account Code</label>
+                  <select id="po-gl-account">
+                    <option value="">— Select GL Code —</option>
+                    <option value="1001">1001 — Fixed Assets</option>
+                    <option value="1002">1002 — Capital WIP</option>
+                    <option value="5001">5001 — IT &amp; Technology</option>
+                    <option value="5002">5002 — Marketing &amp; Brand</option>
+                    <option value="5003">5003 — Office Administration</option>
+                    <option value="5004">5004 — Travel &amp; Entertainment</option>
+                    <option value="5005">5005 — Professional Services</option>
+                    <option value="5006">5006 — Repairs &amp; Maintenance</option>
+                    <option value="5007">5007 — Utilities &amp; Rent</option>
+                    <option value="5008">5008 — Human Resources</option>
+                    <option value="5009">5009 — Logistics &amp; Supply Chain</option>
+                    <option value="6001">6001 — Cost of Goods Sold</option>
+                    <option value="6002">6002 — Raw Materials</option>
+                    <option value="9001">9001 — Miscellaneous / Other</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label>Cost Centre</label>
+                  <select id="po-cost-centre">
+                    <option value="">— Select Cost Centre —</option>
+                    <option value="CC-ENG">CC-ENG — Engineering</option>
+                    <option value="CC-MKT">CC-MKT — Marketing</option>
+                    <option value="CC-FIN">CC-FIN — Finance</option>
+                    <option value="CC-OPS">CC-OPS — Operations</option>
+                    <option value="CC-IT">CC-IT — IT &amp; Infrastructure</option>
+                    <option value="CC-HR">CC-HR — Human Resources</option>
+                    <option value="CC-ADM">CC-ADM — Administration</option>
+                    <option value="CC-R&D">CC-R&amp;D — Research &amp; Development</option>
+                    <option value="CC-COGS">CC-COGS — Cost of Goods Sold</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label>Budget Year / Period</label>
+                  <select id="po-budget-period">
+                    <option>FY 2025-26 — Q4 (Jan–Mar 2026)</option>
+                    <option>FY 2026-27 — Q1 (Apr–Jun 2026)</option>
+                    <option>FY 2026-27 — Q2 (Jul–Sep 2026)</option>
+                    <option>FY 2026-27 — Q3 (Oct–Dec 2026)</option>
+                    <option>FY 2026-27 — Q4 (Jan–Mar 2027)</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label>Budget Available (₹)</label>
+                  <input type="number" id="po-budget-available" placeholder="e.g. 5,00,000" min="0"/>
+                  <span class="form-hint">Enter the sanctioned budget for this expense head</span>
+                </div>
+
+                <div class="form-group">
+                  <label>WBS / Project Code</label>
+                  <input type="text" id="po-wbs" placeholder="e.g. WBS-2026-ENG-01"/>
+                  <span class="form-hint">Work Breakdown Structure or project code (if applicable)</span>
+                </div>
+
+                <div class="form-group">
+                  <label>Capitalisation</label>
+                  <select id="po-capitalisation">
+                    <option value="no">No — Revenue Expense (P&amp;L)</option>
+                    <option value="yes">Yes — Capital Asset (Balance Sheet)</option>
+                    <option value="partial">Partial — Mixed Treatment</option>
+                  </select>
+                </div>
+
+              </div>
+
+              <!-- Expense head info banner -->
+              <div id="po-expense-banner" style="display:none;margin-top:12px;padding:10px 14px;border-radius:8px;font-size:12.5px;line-height:1.6;border:1px solid var(--border);background:var(--surface)"></div>
+
             </div>
           </div>
         </div>
@@ -1528,6 +1671,7 @@ textarea{resize:vertical;min-height:80px}
         <!-- Invoice Sub-Navigation -->
         <div style="display:flex;gap:0;margin-bottom:16px;border-bottom:2px solid var(--border)">
           <div class="tab active" id="inv-tab-upload" onclick="switchInvoiceView('upload',this)" style="margin-bottom:-2px">⬆️ Bulk Upload &amp; OCR</div>
+          <div class="tab" id="inv-tab-vendor" onclick="switchInvoiceView('vendor',this)" style="margin-bottom:-2px">🏢 Vendor Invoice Submission</div>
           <div class="tab" id="inv-tab-register" onclick="switchInvoiceView('register',this)" style="margin-bottom:-2px">📋 Invoice Register</div>
         </div>
 
@@ -1610,6 +1754,281 @@ textarea{resize:vertical;min-height:80px}
             </div>
           </div>
         </div>
+
+        <!-- VENDOR INVOICE SUBMISSION VIEW -->
+        <div id="inv-view-vendor" style="display:none">
+
+          <!-- Header banner -->
+          <div style="background:linear-gradient(135deg,#0f172a 0%,#1e3a5f 100%);border-radius:12px;padding:18px 22px;margin-bottom:18px;color:#fff;display:flex;align-items:center;gap:16px">
+            <div style="font-size:36px">🏢</div>
+            <div>
+              <div style="font-size:16px;font-weight:800;letter-spacing:-0.4px;margin-bottom:3px">Vendor Invoice Submission Portal</div>
+              <div style="font-size:12.5px;color:#94a3b8;line-height:1.5">Submit your tax invoice against an approved Purchase Order. All fields marked <span style="color:#f87171">*</span> are mandatory. Invoice will be matched against the PO automatically.</div>
+            </div>
+          </div>
+
+          <!-- Step indicator -->
+          <div style="display:flex;align-items:center;gap:0;margin-bottom:20px" id="vendor-inv-steps">
+            <div class="vendor-step active" id="vstep-1">
+              <div class="vstep-circle">1</div>
+              <div class="vstep-label">PO Lookup</div>
+            </div>
+            <div class="vstep-line" id="vstep-line-1"></div>
+            <div class="vendor-step" id="vstep-2">
+              <div class="vstep-circle">2</div>
+              <div class="vstep-label">Invoice Details</div>
+            </div>
+            <div class="vstep-line" id="vstep-line-2"></div>
+            <div class="vendor-step" id="vstep-3">
+              <div class="vstep-circle">3</div>
+              <div class="vstep-label">Line Items</div>
+            </div>
+            <div class="vstep-line" id="vstep-line-3"></div>
+            <div class="vendor-step" id="vstep-4">
+              <div class="vstep-circle">4</div>
+              <div class="vstep-label">Attach &amp; Submit</div>
+            </div>
+          </div>
+
+          <!-- STEP 1: PO Lookup -->
+          <div id="vendor-inv-step1" class="card" style="margin-bottom:16px">
+            <div class="card-header">
+              <span class="card-title">🔍 Step 1 — Find Your Purchase Order</span>
+              <span style="font-size:12px;color:var(--text-3)">Enter the PO number provided by the buyer</span>
+            </div>
+            <div class="card-body">
+              <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
+                <div class="form-group" style="flex:1;min-width:220px;max-width:340px">
+                  <label>PO Number <span class="req">*</span></label>
+                  <input type="text" id="vinv-po-search" placeholder="e.g. PO-2026-0047" oninput="this.value=this.value.toUpperCase()"
+                    style="font-family:'DM Mono',monospace;font-weight:600;letter-spacing:0.3px"/>
+                </div>
+                <div class="form-group" style="flex:1;min-width:180px;max-width:260px">
+                  <label>Your Vendor Name <span class="req">*</span></label>
+                  <select id="vinv-vendor-sel">
+                    <option value="">— Select your company —</option>
+                    <option>Synapse Tech Pvt Ltd</option>
+                    <option>CloudNet Services</option>
+                    <option>Infra Solutions Pvt Ltd</option>
+                    <option>GlobalSource Inc</option>
+                    <option>FuturePrint Supplies</option>
+                  </select>
+                </div>
+                <button class="btn btn-primary" onclick="vendorInvLookupPO()" style="align-self:flex-end;padding:9px 22px">🔍 Look Up PO</button>
+              </div>
+
+              <!-- PO Result panel -->
+              <div id="vinv-po-result" style="display:none;margin-top:14px;padding:14px 16px;border-radius:10px;border:1.5px solid var(--success);background:#f0fdf4">
+                <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap">
+                  <div>
+                    <div style="font-size:11px;font-weight:700;color:#065f46;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">✅ PO Found — Approved &amp; Open for Invoice</div>
+                    <div style="font-size:14px;font-weight:800;color:var(--text)" id="vinv-po-id-display">—</div>
+                    <div style="font-size:13px;color:var(--text-2);margin-top:2px" id="vinv-po-title-display">—</div>
+                  </div>
+                  <div style="text-align:right">
+                    <div style="font-size:11px;color:var(--text-3);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:2px">PO Value</div>
+                    <div style="font-size:18px;font-weight:800;color:var(--primary);font-family:'DM Mono',monospace" id="vinv-po-amount-display">—</div>
+                  </div>
+                </div>
+                <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px" id="vinv-po-details-grid"></div>
+              </div>
+
+              <div id="vinv-po-error" style="display:none;margin-top:12px;padding:12px 14px;border-radius:8px;background:#fee2e2;border:1px solid #fecaca;color:#dc2626;font-size:13px;font-weight:600"></div>
+            </div>
+          </div>
+
+          <!-- STEP 2: Invoice Header -->
+          <div id="vendor-inv-step2" class="card" style="margin-bottom:16px;opacity:0.5;pointer-events:none">
+            <div class="card-header">
+              <span class="card-title">🧾 Step 2 — Invoice Details</span>
+            </div>
+            <div class="card-body">
+              <div class="form-grid">
+                <div class="form-group">
+                  <label>Invoice Number <span class="req">*</span></label>
+                  <input type="text" id="vinv-number" placeholder="e.g. INV-2026-0123" oninput="this.value=this.value.toUpperCase()"/>
+                </div>
+                <div class="form-group">
+                  <label>Invoice Date <span class="req">*</span></label>
+                  <input type="date" id="vinv-date" value="2026-03-19"/>
+                </div>
+                <div class="form-group">
+                  <label>Supply Type</label>
+                  <select id="vinv-supply-type">
+                    <option>Regular Tax Invoice</option>
+                    <option>Bill of Supply (Exempt)</option>
+                    <option>Export Invoice</option>
+                    <option>Debit Note</option>
+                    <option>Credit Note</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Place of Supply</label>
+                  <select id="vinv-pos">
+                    <option>27 — Maharashtra</option>
+                    <option>29 — Karnataka</option>
+                    <option>07 — Delhi</option>
+                    <option>24 — Gujarat</option>
+                    <option>19 — West Bengal</option>
+                    <option>33 — Tamil Nadu</option>
+                    <option>36 — Telangana</option>
+                    <option>International</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Your GSTIN <span class="req">*</span></label>
+                  <input type="text" id="vinv-gstin" placeholder="22AAAAA0000A1Z5" maxlength="15" oninput="validateVendorInvGSTIN(this)"/>
+                  <span class="form-hint" id="vinv-gstin-hint">15-character GST Identification Number</span>
+                </div>
+                <div class="form-group">
+                  <label>Your PAN</label>
+                  <input type="text" id="vinv-pan" placeholder="AAAAA0000A" maxlength="10"/>
+                </div>
+                <div class="form-group">
+                  <label>Payment Terms</label>
+                  <select id="vinv-payment-terms">
+                    <option>As per PO — Net 30</option>
+                    <option>Net 15 days</option>
+                    <option>Net 30 days</option>
+                    <option>Net 45 days</option>
+                    <option>Net 60 days</option>
+                    <option>Immediate / Advance</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Bank Account (Last 4 digits)</label>
+                  <input type="text" id="vinv-bank" placeholder="XXXX" maxlength="4"/>
+                </div>
+                <div class="form-group form-full">
+                  <label>Narration / Remarks</label>
+                  <input type="text" id="vinv-narration" placeholder="e.g. Invoice for IT Hardware per PO-2026-0047 — March delivery"/>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- STEP 3: Line Items -->
+          <div id="vendor-inv-step3" class="card" style="margin-bottom:16px;opacity:0.5;pointer-events:none">
+            <div class="card-header">
+              <span class="card-title">📦 Step 3 — Invoice Line Items</span>
+              <button class="btn btn-secondary btn-sm" onclick="addVendorInvItem()">+ Add Item</button>
+            </div>
+            <div class="card-body" style="padding:0">
+              <div style="overflow-x:auto">
+                <table class="line-items-table" id="vinv-items-table">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Description <span style="color:var(--danger)">*</span></th>
+                      <th>HSN / SAC</th>
+                      <th>Qty <span style="color:var(--danger)">*</span></th>
+                      <th>UOM</th>
+                      <th>Unit Rate (₹) <span style="color:var(--danger)">*</span></th>
+                      <th>GST %</th>
+                      <th>Taxable Amt (₹)</th>
+                      <th>GST Amt (₹)</th>
+                      <th>Total (₹)</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody id="vinv-items-body"></tbody>
+                  <tfoot id="vinv-items-foot"></tfoot>
+                </table>
+              </div>
+              <div style="padding:10px 14px;background:var(--surface);border-top:1px solid var(--border);font-size:12px;color:var(--text-3)">
+                💡 Add line items matching the PO. Quantities must not exceed the PO quantity. System will auto-match on submit.
+              </div>
+            </div>
+          </div>
+
+          <!-- STEP 4: Attach & Submit -->
+          <div id="vendor-inv-step4" class="card" style="margin-bottom:16px;opacity:0.5;pointer-events:none">
+            <div class="card-header">
+              <span class="card-title">📎 Step 4 — Attach Invoice &amp; Submit</span>
+            </div>
+            <div class="card-body">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+
+                <!-- File upload -->
+                <div>
+                  <div style="font-size:12.5px;font-weight:700;color:var(--text-2);margin-bottom:8px">Upload Tax Invoice (PDF / Image) <span class="req">*</span></div>
+                  <div id="vinv-dropzone"
+                    style="border:2px dashed var(--border);border-radius:10px;padding:28px 20px;text-align:center;cursor:pointer;background:var(--surface);transition:all 0.2s"
+                    onclick="document.getElementById('vinv-file-input').click()"
+                    ondragover="event.preventDefault();this.style.borderColor='var(--primary)';this.style.background='var(--primary-light)'"
+                    ondragleave="this.style.borderColor='var(--border)';this.style.background='var(--surface)'"
+                    ondrop="vendorInvFileDrop(event)">
+                    <div style="font-size:32px;margin-bottom:8px;opacity:0.4">📤</div>
+                    <div style="font-size:13px;font-weight:600;color:var(--text-2);margin-bottom:4px">Click or drag to upload</div>
+                    <div style="font-size:11.5px;color:var(--text-3)">PDF, PNG, JPG, TIFF · Max 10 MB</div>
+                    <input type="file" id="vinv-file-input" accept=".pdf,.png,.jpg,.jpeg,.tiff,.tif"
+                      style="display:none" onchange="vendorInvFileSelect(this.files)"/>
+                  </div>
+                  <div id="vinv-file-display" style="display:none;margin-top:10px;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:8px;display:none;align-items:center;gap:10px">
+                    <span style="font-size:20px">📄</span>
+                    <div style="flex:1;min-width:0">
+                      <div id="vinv-file-name" style="font-size:12.5px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div>
+                      <div id="vinv-file-size" style="font-size:11px;color:var(--text-3);margin-top:1px"></div>
+                    </div>
+                    <button onclick="clearVendorInvFile()" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:18px;padding:2px">×</button>
+                  </div>
+
+                  <div style="margin-top:12px">
+                    <div style="font-size:12px;font-weight:600;color:var(--text-3);margin-bottom:6px">Supporting Documents (optional)</div>
+                    <input type="file" multiple accept=".pdf,.png,.jpg,.docx"
+                      style="font-size:12.5px;padding:6px;border:1.5px solid var(--border);border-radius:8px;width:100%"/>
+                    <span class="form-hint">Delivery challan, packing list, inspection report, etc.</span>
+                  </div>
+                </div>
+
+                <!-- Declaration + Submission -->
+                <div style="display:flex;flex-direction:column;gap:14px">
+                  <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:14px">
+                    <div style="font-size:12px;font-weight:700;color:#92400e;margin-bottom:8px">📋 Submission Checklist</div>
+                    <div style="display:flex;flex-direction:column;gap:6px;font-size:12px;color:#78350f">
+                      <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer"><input type="checkbox" id="vinv-chk1" style="margin-top:2px;accent-color:var(--primary)"/> Invoice number &amp; date are correct</label>
+                      <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer"><input type="checkbox" id="vinv-chk2" style="margin-top:2px;accent-color:var(--primary)"/> GSTIN &amp; PAN details are accurate</label>
+                      <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer"><input type="checkbox" id="vinv-chk3" style="margin-top:2px;accent-color:var(--primary)"/> Line items match the delivery / service provided</label>
+                      <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer"><input type="checkbox" id="vinv-chk4" style="margin-top:2px;accent-color:var(--primary)"/> GST amounts are calculated correctly</label>
+                      <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer"><input type="checkbox" id="vinv-chk5" style="margin-top:2px;accent-color:var(--primary)"/> Invoice PDF / image is attached</label>
+                    </div>
+                  </div>
+
+                  <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:12px;font-size:12px;color:#065f46;line-height:1.6">
+                    <b>Declaration:</b> I confirm that the details in this invoice are true, the goods/services have been delivered as described, and the invoice complies with GST regulations.
+                  </div>
+
+                  <div id="vinv-summary-box" style="background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:12px">
+                    <div style="font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">Invoice Summary</div>
+                    <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px">
+                      <span style="color:var(--text-2)">Taxable Amount</span>
+                      <span id="vinv-sum-taxable" style="font-weight:600;font-family:'DM Mono',monospace">₹0.00</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px">
+                      <span style="color:var(--text-2)">GST</span>
+                      <span id="vinv-sum-gst" style="font-weight:600;font-family:'DM Mono',monospace">₹0.00</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;font-size:14px;font-weight:800;padding-top:8px;border-top:1.5px solid var(--border);margin-top:4px">
+                      <span style="color:var(--primary)">Grand Total</span>
+                      <span id="vinv-sum-total" style="color:var(--primary);font-family:'DM Mono',monospace">₹0.00</span>
+                    </div>
+                  </div>
+
+                  <button class="btn btn-primary" onclick="submitVendorInvoice()"
+                    style="width:100%;padding:13px;font-size:15px;border-radius:10px;justify-content:center;gap:8px">
+                    ✅ Submit Invoice
+                  </button>
+                  <button class="btn btn-secondary" onclick="resetVendorInvForm()"
+                    style="width:100%;justify-content:center">
+                    🔄 Reset Form
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+        <!-- END VENDOR INVOICE SUBMISSION VIEW -->
 
         <!-- INVOICE REGISTER VIEW -->
         <div id="inv-view-register" style="display:none">
@@ -3552,6 +3971,72 @@ function recalcCurrencyTotal() {
   if(inrEl)     inrEl.textContent     = rate ? '₹ ' + Math.round(inrVal).toLocaleString('en-IN') : '₹ —';
 }
 
+function updateExpenseSubcategory(){
+  const cat = document.getElementById('po-expense-category')?.value || '';
+  const sub = document.getElementById('po-expense-subhead');
+  const banner = document.getElementById('po-expense-banner');
+  const glSel  = document.getElementById('po-gl-account');
+  const capSel = document.getElementById('po-capitalisation');
+
+  const subMap = {
+    'capex-it':      ['Server & Networking Equipment','Laptops & Desktops','Storage Devices','Peripherals & Accessories','Data Centre Equipment'],
+    'capex-plant':   ['Manufacturing Machinery','Assembly Line Equipment','Testing Equipment','Tools & Instruments'],
+    'capex-furniture':['Workstations & Chairs','Cabinets & Storage','Meeting Room Furniture','Reception Furniture'],
+    'capex-vehicle': ['Company Cars','Delivery Vehicles','Two-wheelers','Specialised Vehicles'],
+    'capex-building':['Office Fitout','Civil Construction','Electrical Works','Plumbing & HVAC','Security Systems'],
+    'capex-other':   ['Intangible Assets','Goodwill','Patents & Licences','Other Capital Items'],
+    'opex-it':       ['Software Licences','SaaS Subscriptions','Cloud Hosting','Domain & SSL','IT Support Contracts'],
+    'opex-marketing':['Digital Advertising','Print & Media','Events & Sponsorships','Branding & Design','PR & Communications'],
+    'opex-office':   ['Paper & Stationery','Printer Consumables','Pantry Supplies','Cleaning Supplies','General Office Items'],
+    'opex-travel':   ['Air Travel','Hotel & Accommodation','Local Transport','Visa & Documentation','Meals & Entertainment'],
+    'opex-utilities':['Electricity','Water','Internet & Telecom','Office Rent','Facility Management'],
+    'opex-professional':['Legal Fees','Audit & Accounting','Management Consulting','Technical Consulting','Training & Development'],
+    'opex-maintenance':['IT Equipment Maintenance','Office Equipment AMC','Building Maintenance','Vehicle Servicing'],
+    'opex-hr':       ['Recruitment Fees','Background Verification','Employee Benefits','Payroll Services','HR Software'],
+    'opex-logistics':['Courier & Delivery','Warehouse Charges','Customs & Clearance','Freight & Shipping'],
+    'opex-other':    ['Bank Charges','Insurance Premiums','Miscellaneous Admin','Other Operating'],
+    'cogs-raw':      ['Raw Materials — Primary','Raw Materials — Secondary','Consumables','Components & Parts'],
+    'cogs-packaging':['Primary Packaging','Secondary Packaging','Labels & Tags','Protective Packaging'],
+    'cogs-direct':   ['Contract Manufacturing','Job Work Charges','Direct Labour','Quality Testing Services'],
+  };
+
+  const bannerMap = {
+    'capex-it':     {color:'#dbeafe',border:'#93c5fd',text:'ℹ️ <b>CapEx — IT:</b> This expense will be capitalised. Ensure asset tagging and useful life are specified. Depreciation will apply as per Company Act (Schedule II). Approval from CFO required for amounts above ₹5L.', gl:'1001', cap:'yes'},
+    'capex-plant':  {color:'#dbeafe',border:'#93c5fd',text:'ℹ️ <b>CapEx — Plant & Machinery:</b> Capitalise as fixed asset. Factory inspection and technical sign-off required. Subject to CWIP until installation is complete.', gl:'1001', cap:'yes'},
+    'capex-furniture':{color:'#dbeafe',border:'#93c5fd',text:'ℹ️ <b>CapEx — Furniture:</b> Items above ₹5,000 per unit to be capitalised. Below threshold treated as OpEx.', gl:'1001', cap:'yes'},
+    'opex-it':      {color:'#ecfdf5',border:'#6ee7b7',text:'✅ <b>OpEx — IT & Software:</b> Revenue expense, charged to P&L in the period of use. Annual subscriptions to be prepaid and amortised monthly. Ensure vendor agreement is in place.', gl:'5001', cap:'no'},
+    'opex-marketing':{color:'#ecfdf5',border:'#6ee7b7',text:'✅ <b>OpEx — Marketing:</b> Revenue expense. Campaign costs should be linked to a campaign code. ROI tracking required for spends above ₹2L.', gl:'5002', cap:'no'},
+    'opex-office':  {color:'#ecfdf5',border:'#6ee7b7',text:'✅ <b>OpEx — Office Supplies:</b> Revenue expense. Petty cash or PO route depending on value. GRN required for goods receipt.', gl:'5003', cap:'no'},
+    'opex-professional':{color:'#fef3c7',border:'#fde68a',text:'⚠️ <b>OpEx — Professional Services:</b> Ensure a signed SOW / contract is attached. TDS @ 10% (Sec 194J) applicable. GSTN of service provider is mandatory.', gl:'5005', cap:'no'},
+    'opex-travel':  {color:'#ecfdf5',border:'#6ee7b7',text:'✅ <b>OpEx — Travel:</b> Employee travel reimbursements follow HR travel policy. Advance claims require manager approval prior to travel.', gl:'5004', cap:'no'},
+    'cogs-raw':     {color:'#fff7ed',border:'#fed7aa',text:'📦 <b>COGS — Raw Materials:</b> Linked to production order / BOM. Quality inspection and GRN mandatory. Cost to be matched against batch/lot number.', gl:'6002', cap:'no'},
+    'cogs-direct':  {color:'#fff7ed',border:'#fed7aa',text:'📦 <b>COGS — Direct Services:</b> Contract manufacturing / job work. Challan-based tracking required. TDS as applicable under Sec 194C.', gl:'6001', cap:'no'},
+  };
+
+  // Populate sub-head
+  const subs = subMap[cat] || [];
+  if(sub){
+    sub.innerHTML = subs.length
+      ? subs.map(s=>`<option>${s}</option>`).join('')
+      : '<option value="">— No sub-categories —</option>';
+  }
+
+  // Show/update info banner
+  const info = bannerMap[cat];
+  if(banner){
+    if(info){
+      banner.style.display='block';
+      banner.style.background=info.color;
+      banner.style.borderColor=info.border;
+      banner.innerHTML=info.text;
+      // Auto-suggest GL and capitalisation
+      if(glSel && info.gl)  glSel.value = info.gl;
+      if(capSel && info.cap) capSel.value = info.cap;
+    } else {
+      banner.style.display='none';
+    }
+  }
+}
 function togglePOMode(el) {
   document.getElementById('pr-section').style.display=el.value==='pr'?'block':'none';
 }
@@ -4893,11 +5378,302 @@ function updateInvoiceKPIs(){
 /* ---------- View switching ---------- */
 function switchInvoiceView(view, el){
   document.getElementById('inv-view-upload').style.display   = view==='upload'   ? 'block' : 'none';
+  document.getElementById('inv-view-vendor').style.display   = view==='vendor'   ? 'block' : 'none';
   document.getElementById('inv-view-register').style.display = view==='register' ? 'block' : 'none';
-  document.getElementById('inv-tab-upload').classList.toggle('active',   view==='upload');
-  document.getElementById('inv-tab-register').classList.toggle('active', view==='register');
-  if(view==='register') renderInvoiceRegister();
+  ['inv-tab-upload','inv-tab-vendor','inv-tab-register'].forEach(id=>{
+    const t=document.getElementById(id); if(t) t.classList.remove('active');
+  });
+  if(el) el.classList.add('active');
+  if(view==='register'){ renderInvoiceRegister(); updateInvoiceKPIs(); }
+  if(view==='vendor')  { initVendorInvForm(); }
 }
+
+// ===== VENDOR INVOICE SUBMISSION =====
+let vinvItems = [{desc:'',hsn:'',qty:1,uom:'Nos',rate:0,gst:18}];
+let vinvSelectedPO = null;
+let vinvFile = null;
+const GST_SLABS_VINV = [0,0.1,0.25,1.5,3,5,6,12,18,28];
+
+function initVendorInvForm(){
+  vinvItems = [{desc:'',hsn:'',qty:1,uom:'Nos',rate:0,gst:18}];
+  vinvSelectedPO = null;
+  vinvFile = null;
+  renderVendorInvItems();
+  setVendorInvStep(1);
+  ['vinv-po-result','vinv-po-error'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.style.display='none';
+  });
+  const s=document.getElementById('vinv-po-search');
+  if(s) s.value='';
+  updateVendorInvSummary();
+}
+
+function setVendorInvStep(active){
+  for(let i=1;i<=4;i++){
+    const step=document.getElementById('vstep-'+i);
+    const line=document.getElementById('vstep-line-'+i);
+    const card=document.getElementById('vendor-inv-step'+i);
+    if(step){
+      step.classList.remove('active','done');
+      if(i<active) step.classList.add('done');
+      else if(i===active) step.classList.add('active');
+    }
+    if(line){
+      line.classList.remove('active','done');
+      if(i<active) line.classList.add('done');
+    }
+    if(card){
+      if(i<=active){
+        card.style.opacity='1';
+        card.style.pointerEvents='auto';
+      } else {
+        card.style.opacity='0.45';
+        card.style.pointerEvents='none';
+      }
+    }
+  }
+}
+
+function vendorInvLookupPO(){
+  const poId   = (document.getElementById('vinv-po-search')?.value||'').trim().toUpperCase();
+  const vendor = document.getElementById('vinv-vendor-sel')?.value||'';
+  const resEl  = document.getElementById('vinv-po-result');
+  const errEl  = document.getElementById('vinv-po-error');
+
+  if(!poId){ toast('Please enter a PO number','error'); return; }
+  if(!vendor){ toast('Please select your vendor name','error'); return; }
+
+  resEl.style.display='none';
+  errEl.style.display='none';
+
+  const po = db.pos.find(p=>p.id===poId);
+
+  if(!po){
+    errEl.textContent='❌ PO '+poId+' not found. Please check the PO number and try again.';
+    errEl.style.display='block';
+    vinvSelectedPO=null;
+    setVendorInvStep(1);
+    return;
+  }
+  if(po.vendor !== vendor){
+    errEl.textContent='❌ This PO is not assigned to '+vendor+'. Please select the correct vendor or check the PO number.';
+    errEl.style.display='block';
+    vinvSelectedPO=null;
+    setVendorInvStep(1);
+    return;
+  }
+  if(po.status !== 'Approved'){
+    errEl.textContent='⚠ PO '+poId+' is currently "'+po.status+'". Only Approved POs can receive vendor invoices.';
+    errEl.style.display='block';
+    vinvSelectedPO=null;
+    setVendorInvStep(1);
+    return;
+  }
+
+  // PO found and valid
+  vinvSelectedPO = po;
+  const fmt = n => Number(n).toLocaleString('en-IN');
+
+  document.getElementById('vinv-po-id-display').textContent    = po.id;
+  document.getElementById('vinv-po-title-display').textContent = po.title;
+  document.getElementById('vinv-po-amount-display').textContent= '₹'+fmt(po.total);
+
+  const vendorData = db.vendors.find(v=>v.name===po.vendor)||{};
+  document.getElementById('vinv-po-details-grid').innerHTML = [
+    ['PO Date', po.created],
+    ['Department', po.dept],
+    ['PO Type', po.type],
+    ['Goods / Services', po.poType==='goods'?'Goods':'Services'],
+    ['Taxable Amt', '₹'+fmt(po.amount)],
+    ['GST', '₹'+fmt(po.gst)],
+    ['Vendor GSTIN', vendorData.gstin||'—'],
+    ['PO Status', po.status],
+  ].map(([k,v])=>`
+    <div style="background:#fff;border-radius:6px;padding:7px 10px;border:1px solid #d1fae5">
+      <div style="font-size:10px;font-weight:700;color:#065f46;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:2px">${k}</div>
+      <div style="font-size:12.5px;font-weight:600;color:var(--text)">${v}</div>
+    </div>`).join('');
+
+  resEl.style.display='block';
+
+  // Pre-fill vendor GSTIN
+  const gstinEl=document.getElementById('vinv-gstin');
+  if(gstinEl && vendorData.gstin && vendorData.gstin!=='N/A') gstinEl.value=vendorData.gstin;
+
+  // Pre-fill line items from PO if available
+  if(po.lineItems && po.lineItems.length){
+    vinvItems = po.lineItems.map(li=>({
+      desc:li.desc||'', hsn:li.code||li.hsnSac||'', qty:li.qty||1,
+      uom:li.uom||'Nos', rate:li.rate||0, gst:li.gst||18
+    }));
+  } else {
+    vinvItems = [{desc:po.title, hsn:po.poType==='goods'?'84713010':'998314', qty:1, uom:'Nos', rate:po.amount, gst:18}];
+  }
+  renderVendorInvItems();
+  toast('PO '+po.id+' found — fill in invoice details below','success');
+  setVendorInvStep(4);
+}
+
+function renderVendorInvItems(){
+  const tbody=document.getElementById('vinv-items-body');
+  const tfoot=document.getElementById('vinv-items-foot');
+  if(!tbody) return;
+
+  const uoms=['Pcs','Nos','Kg','L','m','m²','Box','Set','Hour','Day','Month','Lump Sum'];
+  const gstOpts = GST_SLABS_VINV.map(r=>`<option value="${r}">${r===0?'0% — Nil':r+'%'}</option>`).join('');
+
+  tbody.innerHTML = vinvItems.map((li,i)=>{
+    const sub  = (li.qty*li.rate)||0;
+    const tax  = sub*(li.gst/100);
+    const tot  = sub+tax;
+    const fmt  = n => Number(n).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
+    return `<tr>
+      <td style="text-align:center;color:var(--text-3)">${i+1}</td>
+      <td><input value="${li.desc}" placeholder="Item description" oninput="vinvItems[${i}].desc=this.value" style="width:140px"/></td>
+      <td><input value="${li.hsn||''}" placeholder="HSN/SAC" oninput="vinvItems[${i}].hsn=this.value" style="width:80px"/></td>
+      <td><input type="number" value="${li.qty}" min="0.01" step="0.01" style="width:60px" oninput="vinvItems[${i}].qty=+this.value;renderVendorInvItems()"/></td>
+      <td><select onchange="vinvItems[${i}].uom=this.value">${uoms.map(u=>`<option ${u===li.uom?'selected':''}>${u}</option>`).join('')}</select></td>
+      <td><input type="number" value="${li.rate}" min="0" style="width:100px" oninput="vinvItems[${i}].rate=+this.value;renderVendorInvItems()"/></td>
+      <td>
+        <select style="width:80px;font-size:12.5px" onchange="vinvItems[${i}].gst=+this.value;renderVendorInvItems()">
+          ${GST_SLABS_VINV.map(r=>`<option value="${r}" ${r===li.gst?'selected':''}>${r}%</option>`).join('')}
+        </select>
+      </td>
+      <td class="calc">₹${fmt(sub)}</td>
+      <td class="calc">₹${fmt(tax)}</td>
+      <td class="calc" style="font-weight:700;color:var(--primary)">₹${fmt(tot)}</td>
+      <td><button onclick="vinvItems.splice(${i},1);renderVendorInvItems()" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:16px;padding:4px" ${vinvItems.length===1?'disabled style="opacity:0.3"':''}>×</button></td>
+    </tr>`;
+  }).join('');
+
+  const totSub = vinvItems.reduce((a,li)=>a+(li.qty*li.rate),0);
+  const totGst = vinvItems.reduce((a,li)=>a+(li.qty*li.rate*(li.gst/100)),0);
+  const totTot = totSub+totGst;
+  const fmt = n => Number(n).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
+
+  tfoot.innerHTML=`<tr style="background:var(--primary-light);font-weight:700">
+    <td colspan="7" style="padding:9px 10px;text-align:right;color:var(--primary)">Totals</td>
+    <td class="calc">₹${fmt(totSub)}</td>
+    <td class="calc">₹${fmt(totGst)}</td>
+    <td class="calc" style="color:var(--primary);font-size:14px">₹${fmt(totTot)}</td>
+    <td></td>
+  </tr>`;
+  updateVendorInvSummary(totSub, totGst, totTot);
+}
+
+function addVendorInvItem(){
+  vinvItems.push({desc:'',hsn:'',qty:1,uom:'Nos',rate:0,gst:18});
+  renderVendorInvItems();
+}
+
+function updateVendorInvSummary(sub=0,gst=0,tot=0){
+  const fmt = n => '₹'+Number(n).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
+  const s=document.getElementById('vinv-sum-taxable');
+  const g=document.getElementById('vinv-sum-gst');
+  const t=document.getElementById('vinv-sum-total');
+  if(s) s.textContent=fmt(sub);
+  if(g) g.textContent=fmt(gst);
+  if(t) t.textContent=fmt(tot);
+}
+
+function validateVendorInvGSTIN(inp){
+  const v=inp.value.trim().toUpperCase();
+  const valid=/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/.test(v);
+  inp.style.borderColor=v.length===0?'var(--border)':valid?'var(--success)':'var(--danger)';
+  const hint=document.getElementById('vinv-gstin-hint');
+  if(hint) hint.textContent=v.length===0?'15-character GST Identification Number':valid?'✓ Valid GSTIN':'✗ Invalid GSTIN format';
+  if(hint) hint.style.color=valid?'var(--success)':v.length>0?'var(--danger)':'var(--text-3)';
+}
+
+function vendorInvFileDrop(e){
+  e.preventDefault();
+  const dz=document.getElementById('vinv-dropzone');
+  dz.style.borderColor='var(--border)';
+  dz.style.background='var(--surface)';
+  if(e.dataTransfer.files.length) vendorInvFileSelect(e.dataTransfer.files);
+}
+
+function vendorInvFileSelect(files){
+  if(!files.length) return;
+  vinvFile = files[0];
+  const display=document.getElementById('vinv-file-display');
+  document.getElementById('vinv-file-name').textContent=vinvFile.name;
+  document.getElementById('vinv-file-size').textContent=(vinvFile.size/1024).toFixed(1)+' KB';
+  display.style.display='flex';
+  toast('Invoice file attached: '+vinvFile.name,'success');
+}
+
+function clearVendorInvFile(){
+  vinvFile=null;
+  document.getElementById('vinv-file-display').style.display='none';
+  document.getElementById('vinv-file-input').value='';
+}
+
+function submitVendorInvoice(){
+  // Validations
+  if(!vinvSelectedPO){ toast('Please look up a PO first','error'); return; }
+  const invNo   = document.getElementById('vinv-number')?.value.trim();
+  const invDate = document.getElementById('vinv-date')?.value;
+  const gstin   = document.getElementById('vinv-gstin')?.value.trim();
+  if(!invNo)  { toast('Invoice number is required','error'); return; }
+  if(!invDate){ toast('Invoice date is required','error'); return; }
+  if(!gstin)  { toast('Your GSTIN is required','error'); return; }
+  if(vinvItems.every(li=>!li.rate)){ toast('Please enter unit rates for at least one line item','error'); return; }
+  if(!vinvFile) { toast('Please attach the invoice PDF/image','error'); return; }
+
+  const chks = [1,2,3,4,5].map(n=>document.getElementById('vinv-chk'+n)?.checked);
+  if(!chks.every(c=>c)){ toast('Please tick all checklist items before submitting','error'); return; }
+
+  // Check for duplicate invoice number
+  if(db.invoices.find(i=>i.id===invNo)){
+    toast('Invoice '+invNo+' already exists in the system','error'); return;
+  }
+
+  const totSub = vinvItems.reduce((a,li)=>a+(li.qty*li.rate),0);
+  const totGst = vinvItems.reduce((a,li)=>a+(li.qty*li.rate*(li.gst/100)),0);
+  const totTot = Math.round((totSub+totGst)*100)/100;
+
+  const variance = totTot - vinvSelectedPO.total;
+  const matchStatus = Math.abs(variance) < 1 ? 'Matched'
+    : Math.abs(variance)/vinvSelectedPO.total < 0.1 ? 'Partially Matched'
+    : 'Unmatched';
+
+  // Submit invoice to db
+  db.invoices.unshift({
+    id:invNo, date:invDate, vendor:vinvSelectedPO.vendor, gstin,
+    taxable:Math.round(totSub), gst:Math.round(totGst), total:Math.round(totTot),
+    poId:vinvSelectedPO.id, poValue:vinvSelectedPO.total,
+    matchStatus, status: matchStatus==='Matched'?'Approved':'On Hold',
+    uploadedOn:new Date().toISOString().slice(0,10), ocrConf:100,
+    submittedByVendor:true,
+  });
+
+  db.auditLog.unshift({
+    ts:new Date().toLocaleString(), event:'Create', entity:'Invoice', entityId:invNo,
+    actor:vinvSelectedPO.vendor, role:'Vendor',
+    detail:`Vendor submitted Invoice ${invNo} against ${vinvSelectedPO.id} — ₹${Math.round(totTot).toLocaleString('en-IN')} · Match: ${matchStatus}`
+  });
+
+  updateInvoiceKPIs();
+  toast(`✅ Invoice ${invNo} submitted successfully! Status: ${matchStatus}`,'success');
+
+  // Show confirmation and reset
+  setTimeout(()=>{
+    resetVendorInvForm();
+    switchInvoiceView('register', document.getElementById('inv-tab-register'));
+  }, 1500);
+}
+
+function resetVendorInvForm(){
+  initVendorInvForm();
+  ['vinv-number','vinv-gstin','vinv-pan','vinv-narration','vinv-bank'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.value='';
+  });
+  [1,2,3,4,5].forEach(n=>{
+    const el=document.getElementById('vinv-chk'+n); if(el) el.checked=false;
+  });
+}
+
 
 /* ---------- Invoice Register ---------- */
 function renderInvoiceRegister(searchTerm='', statusFilter=''){
