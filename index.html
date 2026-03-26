@@ -29,9 +29,9 @@
   --shadow-lg: 0 10px 40px rgba(0,0,0,0.12);
 }
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);display:flex;height:100vh;overflow:hidden;font-size:14px}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);display:flex;flex-direction:row;height:100vh;width:100vw;overflow:hidden;font-size:14px;margin:0;padding:0}
 /* SIDEBAR */
-.sidebar{width:220px;min-width:220px;background:var(--sidebar);display:flex;flex-direction:column;height:100vh;overflow-y:auto;flex-shrink:0;z-index:100;scrollbar-width:none}
+.sidebar{width:220px;min-width:220px;flex-shrink:0;background:var(--sidebar);display:flex;flex-direction:column;height:100vh;overflow-y:auto;overflow-x:hidden;z-index:100;scrollbar-width:none}.sidebar::-webkit-scrollbar{display:none}
 .sidebar-logo{padding:18px 20px 14px;border-bottom:1px solid rgba(255,255,255,0.06)}
 .sidebar-logo .logo-mark{display:flex;align-items:center;gap:0}
 .logo-icon{width:32px;height:32px;background:linear-gradient(135deg,#1d4ed8,#0ea5e9);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#fff;letter-spacing:-1px}
@@ -62,12 +62,12 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);dis
 .user-name{color:#e2e8f0;font-size:13px;font-weight:600}
 .user-role{color:#64748b;font-size:11px}
 /* MAIN */
-.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0;height:100vh}
-.topbar{height:58px;flex-shrink:0;background:var(--card);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 24px;gap:16px;z-index:50}
+.main{flex:1;min-width:0;display:flex;flex-direction:column;height:100vh;overflow:hidden}
+.topbar{flex-shrink:0;height:58px;background:var(--card);border-bottom:1.5px solid var(--border);display:flex;align-items:center;padding:0 24px;gap:16px;z-index:50}
 .topbar-title{font-size:18px;font-weight:700;color:var(--text);letter-spacing:-0.4px}
 .topbar-sub{font-size:13px;color:var(--text-3);margin-left:4px}
 .topbar-actions{margin-left:auto;display:flex;gap:10px;align-items:center}
-.content{flex:1;height:0;min-height:0;overflow-y:scroll;overflow-x:hidden;padding:24px;scrollbar-width:thin;scrollbar-color:#94a3b8 #e8edf2}.content::-webkit-scrollbar{width:8px;display:block}.content::-webkit-scrollbar-track{background:#e8edf2}.content::-webkit-scrollbar-thumb{background:#94a3b8;border-radius:4px;min-height:40px}.content::-webkit-scrollbar-thumb:hover{background:#475569}
+.content{flex:1;min-height:0;overflow-y:scroll;overflow-x:hidden;padding:28px 28px 60px 28px;box-sizing:border-box;scrollbar-width:thin;scrollbar-color:#94a3b8 #e8edf2}.content::-webkit-scrollbar{width:8px}.content::-webkit-scrollbar-track{background:#e8edf2}.content::-webkit-scrollbar-thumb{background:#94a3b8;border-radius:4px;min-height:40px}.content::-webkit-scrollbar-thumb:hover{background:#475569}
 /* BUTTONS */
 .btn{display:inline-flex;align-items:center;gap:7px;padding:8px 16px;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13.5px;font-weight:600;cursor:pointer;border:none;transition:all 0.15s;white-space:nowrap}
 .btn-primary{background:var(--primary);color:#fff}
@@ -203,7 +203,7 @@ textarea{resize:vertical;min-height:80px}
 .exp-ds-name{font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .exp-ds-count{font-size:10.5px;margin-top:2px}
 /* Export Center page: fill viewport height */
-#page-export-center.active{display:flex!important;flex-direction:column;padding:0;overflow:hidden;height:calc(100vh - 58px)}
+#page-export-center.active{display:flex!important;flex-direction:column;padding:0;height:100%}
 
 /* VENDOR INVOICE STEPS */
 .vendor-step{display:flex;flex-direction:column;align-items:center;gap:4px;flex:1}
@@ -226,6 +226,7 @@ textarea{resize:vertical;min-height:80px}
 .role-switch{display:flex;gap:6px;align-items:center;background:var(--surface);border:1.5px solid var(--border);padding:4px;border-radius:10px}
 .role-chip{padding:5px 12px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;color:var(--text-3);transition:all 0.15s}
 .role-chip.active{background:var(--primary);color:#fff}
+
 </style>
 </head>
 <body>
@@ -1080,15 +1081,15 @@ textarea{resize:vertical;min-height:80px}
 
     <!-- APPROVALS PAGE -->
     <div class="page" id="page-approvals">
-      <div style="display:grid;grid-template-columns:340px 1fr;gap:16px;height:calc(100vh - 106px)">
-        <div class="card" style="overflow:hidden;display:flex;flex-direction:column">
+      <div style="display:grid;grid-template-columns:340px 1fr;gap:16px;min-height:0">
+        <div class="card" style="display:flex;flex-direction:column;max-height:calc(100vh - 130px)">
           <div class="card-header" style="flex-shrink:0">
             <span class="card-title">⏳ Pending Approvals</span>
             <span class="badge badge-review" id="pending-count-badge">3 pending</span>
           </div>
           <div style="flex:1;overflow-y:auto" id="pending-approvals-list"></div>
         </div>
-        <div class="card" style="overflow:hidden;display:flex;flex-direction:column">
+        <div class="card" style="display:flex;flex-direction:column;max-height:calc(100vh - 130px);overflow:hidden">
           <div class="card-header" style="flex-shrink:0">
             <span class="card-title">📄 PO Detail — Approval View</span>
           </div>
@@ -1644,7 +1645,7 @@ textarea{resize:vertical;min-height:80px}
 
 
     <!-- INVOICES PAGE -->
-    <div class="page" id="page-invoices" style="padding-bottom:40px">
+    <div class="page" id="page-invoices">
 
         <!-- ── KPI Cards ── -->
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:18px">
@@ -1692,7 +1693,7 @@ textarea{resize:vertical;min-height:80px}
         <!-- ═══════════════════════════════════════════════════════════ -->
         <!--  VIEW 1: BULK UPLOAD & OCR                                 -->
         <!-- ═══════════════════════════════════════════════════════════ -->
-        <div id="inv-view-upload" style="padding-bottom:32px">
+        <div id="inv-view-upload" style="padding-bottom:40px">
 
           <!-- PO / Non-PO type selector -->
           <div style="display:flex;gap:12px;margin-bottom:16px">
@@ -1889,7 +1890,7 @@ textarea{resize:vertical;min-height:80px}
         <!-- ═══════════════════════════════════════════════════════════ -->
         <!--  VIEW 2: VENDOR INVOICE SUBMISSION                         -->
         <!-- ═══════════════════════════════════════════════════════════ -->
-        <div id="inv-view-vendor" style="display:none;padding-bottom:48px">
+        <div id="inv-view-vendor" style="display:none;padding-bottom:60px">
 
           <!-- Header -->
           <div style="background:linear-gradient(135deg,#0f172a 0%,#1e3a5f 100%);border-radius:12px;padding:16px 20px;margin-bottom:16px;color:#fff;display:flex;align-items:center;gap:14px">
@@ -2235,7 +2236,7 @@ textarea{resize:vertical;min-height:80px}
         <!-- ═══════════════════════════════════════════════════════════ -->
         <!--  VIEW 3: INVOICE REGISTER                                  -->
         <!-- ═══════════════════════════════════════════════════════════ -->
-        <div id="inv-view-register" style="display:none">
+        <div id="inv-view-register" style="display:none;padding-bottom:40px">
           <div class="filter-bar">
             <div class="search-input"><input type="text" placeholder="Search invoices..." oninput="filterInvoiceRegister(this.value)"/></div>
             <select style="width:160px" onchange="filterInvoiceRegister('',this.value)">
@@ -2268,7 +2269,7 @@ textarea{resize:vertical;min-height:80px}
         <!-- ═══════════════════════════════════════════════════════════ -->
         <!--  VIEW 4: CREDIT NOTES                                      -->
         <!-- ═══════════════════════════════════════════════════════════ -->
-        <div id="inv-view-cn" style="display:none">
+        <div id="inv-view-cn" style="display:none;padding-bottom:40px">
 
           <!-- Credit Note KPIs -->
           <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:18px">
@@ -2345,7 +2346,7 @@ textarea{resize:vertical;min-height:80px}
         <!-- ═══════════════════════════════════════════════════════════ -->
         <!--  VIEW 5: DEBIT NOTES                                       -->
         <!-- ═══════════════════════════════════════════════════════════ -->
-        <div id="inv-view-dn" style="display:none">
+        <div id="inv-view-dn" style="display:none;padding-bottom:40px">
 
           <!-- Debit Note KPIs -->
           <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:18px">
@@ -2423,7 +2424,8 @@ textarea{resize:vertical;min-height:80px}
     <!-- END INVOICES PAGE -->
 
 
-  </div>
+  
+</div>
 </div>
 
 <!-- CREDIT NOTE MODAL -->
@@ -3277,6 +3279,7 @@ function navigateInvoices(view) {
     // Reset scroll after view renders
     const content = document.querySelector('.content');
     if(content) content.scrollTop = 0;
+    requestAnimationFrame(() => { if(content) content.scrollTop = 0; });
   }, 50);
 }
 
@@ -3319,13 +3322,14 @@ function navigateFinance(tab) {
   document.getElementById('topbar-title').textContent = info[0];
   document.getElementById('topbar-sub').textContent   = info[1];
 
-  // Reset scroll first
-  const content = document.querySelector('.content');
-  if(content) content.scrollTop = 0;
   // Switch to the correct tab inside the finance page
   renderFinance();
   const tabEl = document.querySelector(`#finance-tabs .tab[onclick="switchFinanceTab('${tab}',this)"]`);
   if (tabEl) switchFinanceTab(tab, tabEl);
+  // Reset scroll AFTER render — use rAF to ensure layout is settled
+  const content = document.querySelector('.content');
+  if(content) content.scrollTop = 0;
+  requestAnimationFrame(() => { if(content) content.scrollTop = 0; });
 }
 
 function navigate(page) {
@@ -3362,11 +3366,10 @@ function navigate(page) {
   if(page==='export-center') initExportCenter();
   if(page==='audit-log') renderAuditLog();
   if(page==='create-po') initCreatePO();
-  // Reset scroll AFTER rendering so content is at top
-  requestAnimationFrame(() => {
-    const content = document.querySelector('.content');
-    if(content) content.scrollTop = 0;
-  });
+  // Reset scroll AFTER rendering — double-fire to handle async layout
+  const content = document.querySelector('.content');
+  if(content) content.scrollTop = 0;
+  requestAnimationFrame(() => { if(content) content.scrollTop = 0; });
 }
 
 // ===== TOAST =====
@@ -7977,6 +7980,11 @@ document.addEventListener('DOMContentLoaded',()=>{
   initExportCenter();
   applyRoleNav(currentRole);
 });
+
+
+
+// Scroll managed by navigation functions
+
 </script>
 </body>
 </html>
