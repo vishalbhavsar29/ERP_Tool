@@ -67,7 +67,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);dis
 .topbar-title{font-size:18px;font-weight:700;color:var(--text);letter-spacing:-0.4px}
 .topbar-sub{font-size:13px;color:var(--text-3);margin-left:4px}
 .topbar-actions{margin-left:auto;display:flex;gap:10px;align-items:center}
-.content{flex:1;height:0;min-height:0;overflow-y:auto;overflow-x:hidden;padding:24px;scrollbar-width:thin;scrollbar-color:#94a3b8 #e8edf2}.content::-webkit-scrollbar{width:8px}.content::-webkit-scrollbar-track{background:#e8edf2}.content::-webkit-scrollbar-thumb{background:#94a3b8;border-radius:4px;min-height:40px}.content::-webkit-scrollbar-thumb:hover{background:#475569}
+.content{flex:1;height:0;min-height:0;overflow-y:scroll;overflow-x:hidden;padding:24px;scrollbar-width:thin;scrollbar-color:#94a3b8 #e8edf2}.content::-webkit-scrollbar{width:8px;display:block}.content::-webkit-scrollbar-track{background:#e8edf2}.content::-webkit-scrollbar-thumb{background:#94a3b8;border-radius:4px;min-height:40px}.content::-webkit-scrollbar-thumb:hover{background:#475569}
 /* BUTTONS */
 .btn{display:inline-flex;align-items:center;gap:7px;padding:8px 16px;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13.5px;font-weight:600;cursor:pointer;border:none;transition:all 0.15s;white-space:nowrap}
 .btn-primary{background:var(--primary);color:#fff}
@@ -1644,7 +1644,7 @@ textarea{resize:vertical;min-height:80px}
 
 
     <!-- INVOICES PAGE -->
-    <div class="page" id="page-invoices">
+    <div class="page" id="page-invoices" style="padding-bottom:40px">
 
         <!-- ── KPI Cards ── -->
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:18px">
@@ -1681,7 +1681,7 @@ textarea{resize:vertical;min-height:80px}
         </div>
 
         <!-- ── Sub-Navigation Tabs ── -->
-        <div style="display:flex;gap:0;margin-bottom:0;border-bottom:2px solid var(--border);overflow-x:auto;scrollbar-width:none">
+        <div style="display:flex;gap:0;margin-bottom:16px;border-bottom:2px solid var(--border);overflow-x:auto;scrollbar-width:none">
           <div class="tab active" id="inv-tab-upload"   onclick="switchInvoiceView('upload',this)"   style="white-space:nowrap;flex-shrink:0">⬆️ Bulk Upload &amp; OCR</div>
           <div class="tab"        id="inv-tab-vendor"   onclick="switchInvoiceView('vendor',this)"   style="white-space:nowrap;flex-shrink:0">🏢 Vendor Invoice Submission</div>
           <div class="tab"        id="inv-tab-register" onclick="switchInvoiceView('register',this)" style="white-space:nowrap;flex-shrink:0">📋 Invoice Register</div>
@@ -1692,7 +1692,7 @@ textarea{resize:vertical;min-height:80px}
         <!-- ═══════════════════════════════════════════════════════════ -->
         <!--  VIEW 1: BULK UPLOAD & OCR                                 -->
         <!-- ═══════════════════════════════════════════════════════════ -->
-        <div id="inv-view-upload" style="padding-top:18px">
+        <div id="inv-view-upload" style="padding-bottom:32px">
 
           <!-- PO / Non-PO type selector -->
           <div style="display:flex;gap:12px;margin-bottom:16px">
@@ -1889,7 +1889,7 @@ textarea{resize:vertical;min-height:80px}
         <!-- ═══════════════════════════════════════════════════════════ -->
         <!--  VIEW 2: VENDOR INVOICE SUBMISSION                         -->
         <!-- ═══════════════════════════════════════════════════════════ -->
-        <div id="inv-view-vendor" style="display:none;padding-top:18px">
+        <div id="inv-view-vendor" style="display:none;padding-bottom:48px">
 
           <!-- Header -->
           <div style="background:linear-gradient(135deg,#0f172a 0%,#1e3a5f 100%);border-radius:12px;padding:16px 20px;margin-bottom:16px;color:#fff;display:flex;align-items:center;gap:14px">
@@ -2235,7 +2235,7 @@ textarea{resize:vertical;min-height:80px}
         <!-- ═══════════════════════════════════════════════════════════ -->
         <!--  VIEW 3: INVOICE REGISTER                                  -->
         <!-- ═══════════════════════════════════════════════════════════ -->
-        <div id="inv-view-register" style="display:none;padding-top:18px">
+        <div id="inv-view-register" style="display:none">
           <div class="filter-bar">
             <div class="search-input"><input type="text" placeholder="Search invoices..." oninput="filterInvoiceRegister(this.value)"/></div>
             <select style="width:160px" onchange="filterInvoiceRegister('',this.value)">
@@ -2268,7 +2268,7 @@ textarea{resize:vertical;min-height:80px}
         <!-- ═══════════════════════════════════════════════════════════ -->
         <!--  VIEW 4: CREDIT NOTES                                      -->
         <!-- ═══════════════════════════════════════════════════════════ -->
-        <div id="inv-view-cn" style="display:none;padding-top:18px">
+        <div id="inv-view-cn" style="display:none">
 
           <!-- Credit Note KPIs -->
           <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:18px">
@@ -2345,7 +2345,7 @@ textarea{resize:vertical;min-height:80px}
         <!-- ═══════════════════════════════════════════════════════════ -->
         <!--  VIEW 5: DEBIT NOTES                                       -->
         <!-- ═══════════════════════════════════════════════════════════ -->
-        <div id="inv-view-dn" style="display:none;padding-top:18px">
+        <div id="inv-view-dn" style="display:none">
 
           <!-- Debit Note KPIs -->
           <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:18px">
@@ -3274,11 +3274,10 @@ function navigateInvoices(view) {
   setTimeout(() => {
     const tabEl = document.getElementById('inv-tab-' + view);
     switchInvoiceView(view, tabEl);
+    // Reset scroll after view renders
+    const content = document.querySelector('.content');
+    if(content) content.scrollTop = 0;
   }, 50);
-
-  // Scroll to top
-  const content = document.querySelector('.content');
-  if(content) content.scrollTop = 0;
 }
 
 let invoiceSubNavOpen = false;
@@ -3320,6 +3319,9 @@ function navigateFinance(tab) {
   document.getElementById('topbar-title').textContent = info[0];
   document.getElementById('topbar-sub').textContent   = info[1];
 
+  // Reset scroll first
+  const content = document.querySelector('.content');
+  if(content) content.scrollTop = 0;
   // Switch to the correct tab inside the finance page
   renderFinance();
   const tabEl = document.querySelector(`#finance-tabs .tab[onclick="switchFinanceTab('${tab}',this)"]`);
@@ -3342,7 +3344,6 @@ function navigate(page) {
   const el = document.getElementById('page-'+page);
   if(el){
     el.classList.add('active');
-    // Export center uses flex layout
     if(page==='export-center') el.style.display='flex';
   }
   const navEl = document.getElementById('nav-'+page);
@@ -3361,6 +3362,11 @@ function navigate(page) {
   if(page==='export-center') initExportCenter();
   if(page==='audit-log') renderAuditLog();
   if(page==='create-po') initCreatePO();
+  // Reset scroll AFTER rendering so content is at top
+  requestAnimationFrame(() => {
+    const content = document.querySelector('.content');
+    if(content) content.scrollTop = 0;
+  });
 }
 
 // ===== TOAST =====
