@@ -62,12 +62,12 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);dis
 .user-name{color:#e2e8f0;font-size:13px;font-weight:600}
 .user-role{color:#64748b;font-size:11px}
 /* MAIN */
-.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0;min-height:0}
 .topbar{height:58px;background:var(--card);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 24px;gap:16px;flex-shrink:0;z-index:50}
 .topbar-title{font-size:18px;font-weight:700;color:var(--text);letter-spacing:-0.4px}
 .topbar-sub{font-size:13px;color:var(--text-3);margin-left:4px}
 .topbar-actions{margin-left:auto;display:flex;gap:10px;align-items:center}
-.content{flex:1;overflow-y:scroll;overflow-x:hidden;padding:24px;scrollbar-width:auto;scrollbar-color:#94a3b8 #e8edf2;min-height:0}.content::-webkit-scrollbar{width:8px}.content::-webkit-scrollbar-track{background:#e8edf2}.content::-webkit-scrollbar-thumb{background:#94a3b8;border-radius:4px}.content::-webkit-scrollbar-thumb:hover{background:#475569}
+.content{flex:1;overflow-y:scroll;overflow-x:hidden;padding:24px;scrollbar-width:thin;scrollbar-color:#94a3b8 #e8edf2;min-height:0;height:0}.content::-webkit-scrollbar{width:8px;display:block}.content::-webkit-scrollbar-track{background:#e8edf2}.content::-webkit-scrollbar-thumb{background:#94a3b8;border-radius:4px;min-height:40px}.content::-webkit-scrollbar-thumb:hover{background:#475569}
 /* BUTTONS */
 .btn{display:inline-flex;align-items:center;gap:7px;padding:8px 16px;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13.5px;font-weight:600;cursor:pointer;border:none;transition:all 0.15s;white-space:nowrap}
 .btn-primary{background:var(--primary);color:#fff}
@@ -175,7 +175,7 @@ textarea{resize:vertical;min-height:80px}
 .search-input::before{content:'🔍';position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:13px;opacity:0.5;pointer-events:none}
 /* PAGES */
 .page{display:none}
-.page.active{display:block}
+.page.active{display:block;width:100%}
 /* EMPTY STATE */
 .empty-state{text-align:center;padding:60px 20px;color:var(--text-3)}
 .empty-state .icon{font-size:40px;margin-bottom:12px;opacity:0.4}
@@ -1898,22 +1898,62 @@ textarea{resize:vertical;min-height:80px}
         </div>
 
         <!-- VENDOR INVOICE SUBMISSION VIEW -->
-        <div id="inv-view-vendor" style="display:none;overflow-y:auto;padding-bottom:48px">
+        <div id="inv-view-vendor" style="display:none;padding-bottom:60px">
 
           <!-- Header banner -->
           <div style="background:linear-gradient(135deg,#0f172a 0%,#1e3a5f 100%);border-radius:12px;padding:18px 22px;margin-bottom:18px;color:#fff;display:flex;align-items:center;gap:16px">
             <div style="font-size:36px">🏢</div>
-            <div>
+            <div style="flex:1">
               <div style="font-size:16px;font-weight:800;letter-spacing:-0.4px;margin-bottom:3px">Vendor Invoice Submission Portal</div>
-              <div style="font-size:12.5px;color:#94a3b8;line-height:1.5">Submit your tax invoice against an approved Purchase Order. All fields marked <span style="color:#f87171">*</span> are mandatory. Invoice will be matched against the PO automatically.</div>
+              <div id="vinv-banner-sub" style="font-size:12.5px;color:#94a3b8;line-height:1.5">Submit your tax invoice against an approved Purchase Order. All fields marked <span style="color:#f87171">*</span> are mandatory. Invoice will be matched against the PO automatically.</div>
+            </div>
+            <!-- Type badge -->
+            <div id="vinv-type-badge" style="flex-shrink:0;padding:5px 14px;border-radius:20px;background:rgba(99,102,241,0.25);border:1px solid rgba(99,102,241,0.5);color:#a5b4fc;font-size:12px;font-weight:700">📋 PO Based</div>
+          </div>
+
+          <!-- PO / Non-PO Selector -->
+          <div style="display:flex;gap:12px;margin-bottom:20px;align-items:stretch">
+            <div id="vinv-type-po"
+              onclick="setVendorInvType('po')"
+              style="flex:1;padding:14px 18px;border-radius:10px;border:2px solid var(--primary);background:var(--primary-light);cursor:pointer;transition:all 0.15s">
+              <div style="display:flex;align-items:center;gap:10px">
+                <span style="font-size:22px">📋</span>
+                <div style="flex:1">
+                  <div style="font-size:14px;font-weight:800;color:var(--primary)">PO Based Invoice</div>
+                  <div style="font-size:12px;color:var(--text-2);margin-top:2px">Invoice raised against an approved Purchase Order</div>
+                </div>
+                <span id="vinv-type-po-check" style="width:22px;height:22px;border-radius:50%;background:var(--primary);display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700;flex-shrink:0">✓</span>
+              </div>
+              <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
+                <span style="font-size:11px;background:#dbeafe;color:#1e40af;padding:2px 8px;border-radius:4px;font-weight:600">Auto 3-way match</span>
+                <span style="font-size:11px;background:#dbeafe;color:#1e40af;padding:2px 8px;border-radius:4px;font-weight:600">PO variance check</span>
+                <span style="font-size:11px;background:#dbeafe;color:#1e40af;padding:2px 8px;border-radius:4px;font-weight:600">GRN reconciliation</span>
+              </div>
+            </div>
+            <div id="vinv-type-nonpo"
+              onclick="setVendorInvType('nonpo')"
+              style="flex:1;padding:14px 18px;border-radius:10px;border:2px solid var(--border);background:var(--surface);cursor:pointer;transition:all 0.15s">
+              <div style="display:flex;align-items:center;gap:10px">
+                <span style="font-size:22px">🧾</span>
+                <div style="flex:1">
+                  <div style="font-size:14px;font-weight:800;color:var(--text)">Non-PO Invoice</div>
+                  <div style="font-size:12px;color:var(--text-2);margin-top:2px">Direct expense without a Purchase Order</div>
+                </div>
+                <span id="vinv-type-nonpo-check" style="width:22px;height:22px;border-radius:50%;background:var(--border);display:flex;align-items:center;justify-content:center;color:transparent;font-size:12px;font-weight:700;flex-shrink:0">✓</span>
+              </div>
+              <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
+                <span style="font-size:11px;background:#f1f5f9;color:#475569;padding:2px 8px;border-radius:4px;font-weight:600">Expense category</span>
+                <span style="font-size:11px;background:#f1f5f9;color:#475569;padding:2px 8px;border-radius:4px;font-weight:600">GL account code</span>
+                <span style="font-size:11px;background:#f1f5f9;color:#475569;padding:2px 8px;border-radius:4px;font-weight:600">Manual approval</span>
+              </div>
             </div>
           </div>
 
-          <!-- Step indicator -->
+          <!-- Step indicator (dynamic labels based on type) -->
           <div style="display:flex;align-items:center;gap:0;margin-bottom:20px" id="vendor-inv-steps">
             <div class="vendor-step active" id="vstep-1">
               <div class="vstep-circle">1</div>
-              <div class="vstep-label">PO Lookup</div>
+              <div class="vstep-label" id="vstep-1-label">PO Lookup</div>
             </div>
             <div class="vstep-line" id="vstep-line-1"></div>
             <div class="vendor-step" id="vstep-2">
@@ -1932,13 +1972,15 @@ textarea{resize:vertical;min-height:80px}
             </div>
           </div>
 
-          <!-- STEP 1: PO Lookup -->
+          <!-- STEP 1: PO Lookup / Expense Info -->
           <div id="vendor-inv-step1" class="card" style="margin-bottom:16px">
-            <div class="card-header">
+            <div class="card-header" id="vinv-step1-header">
               <span class="card-title">🔍 Step 1 — Find Your Purchase Order</span>
               <span style="font-size:12px;color:var(--text-3)">Enter the PO number provided by the buyer</span>
             </div>
-            <div class="card-body">
+
+            <!-- PO-Based fields -->
+            <div id="vinv-step1-po-fields" class="card-body">
               <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
                 <div class="form-group" style="flex:1;min-width:220px;max-width:340px">
                   <label>PO Number <span class="req">*</span></label>
@@ -1958,8 +2000,6 @@ textarea{resize:vertical;min-height:80px}
                 </div>
                 <button class="btn btn-primary" onclick="vendorInvLookupPO()" style="align-self:flex-end;padding:9px 22px">🔍 Look Up PO</button>
               </div>
-
-              <!-- PO Result panel -->
               <div id="vinv-po-result" style="display:none;margin-top:14px;padding:14px 16px;border-radius:10px;border:1.5px solid var(--success);background:#f0fdf4">
                 <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap">
                   <div>
@@ -1974,8 +2014,100 @@ textarea{resize:vertical;min-height:80px}
                 </div>
                 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;margin-top:12px" id="vinv-po-details-grid"></div>
               </div>
-
               <div id="vinv-po-error" style="display:none;margin-top:12px;padding:12px 14px;border-radius:8px;background:#fee2e2;border:1px solid #fecaca;color:#dc2626;font-size:13px;font-weight:600"></div>
+            </div>
+
+            <!-- Non-PO fields -->
+            <div id="vinv-step1-nonpo-fields" style="display:none" class="card-body">
+              <div style="padding:10px 14px;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;font-size:12.5px;color:#92400e;margin-bottom:14px">
+                ⚠️ <b>Non-PO Invoice:</b> No Purchase Order is required. Please fill in the expense classification details below. The invoice will be routed for manual approval.
+              </div>
+              <div class="form-grid">
+                <div class="form-group">
+                  <label>Your Company / Vendor Name <span class="req">*</span></label>
+                  <select id="vinv-nonpo-vendor">
+                    <option value="">— Select your company —</option>
+                    <option>Synapse Tech Pvt Ltd</option>
+                    <option>CloudNet Services</option>
+                    <option>Infra Solutions Pvt Ltd</option>
+                    <option>GlobalSource Inc</option>
+                    <option>FuturePrint Supplies</option>
+                    <option>Other / New Vendor</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Expense Category <span class="req">*</span></label>
+                  <select id="vinv-nonpo-cat">
+                    <option value="">— Select Category —</option>
+                    <optgroup label="Operating Expenses (OpEx)">
+                      <option value="opex-it">IT &amp; Software Subscriptions</option>
+                      <option value="opex-marketing">Marketing &amp; Advertising</option>
+                      <option value="opex-office">Office Supplies &amp; Stationery</option>
+                      <option value="opex-travel">Travel &amp; Accommodation</option>
+                      <option value="opex-utilities">Utilities &amp; Rent</option>
+                      <option value="opex-professional">Professional &amp; Consulting Fees</option>
+                      <option value="opex-maintenance">Repairs &amp; Maintenance</option>
+                      <option value="opex-hr">HR &amp; Recruitment</option>
+                      <option value="opex-logistics">Logistics &amp; Freight</option>
+                    </optgroup>
+                    <optgroup label="Capital Expenses (CapEx)">
+                      <option value="capex-it">IT Hardware &amp; Infrastructure</option>
+                      <option value="capex-furniture">Furniture &amp; Fixtures</option>
+                      <option value="capex-other">Other Capital Asset</option>
+                    </optgroup>
+                    <optgroup label="COGS">
+                      <option value="cogs-raw">Raw Materials</option>
+                      <option value="cogs-direct">Direct Services / Job Work</option>
+                    </optgroup>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>GL Account Code</label>
+                  <select id="vinv-nonpo-gl">
+                    <option value="">— Select GL Code —</option>
+                    <option value="5001">5001 — IT &amp; Technology</option>
+                    <option value="5002">5002 — Marketing &amp; Brand</option>
+                    <option value="5003">5003 — Office Administration</option>
+                    <option value="5004">5004 — Travel &amp; Entertainment</option>
+                    <option value="5005">5005 — Professional Services</option>
+                    <option value="5006">5006 — Repairs &amp; Maintenance</option>
+                    <option value="5007">5007 — Utilities &amp; Rent</option>
+                    <option value="5008">5008 — Human Resources</option>
+                    <option value="5009">5009 — Logistics &amp; Supply Chain</option>
+                    <option value="1001">1001 — Fixed Assets (CapEx)</option>
+                    <option value="6001">6001 — Cost of Goods Sold</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Cost Centre</label>
+                  <select id="vinv-nonpo-cc">
+                    <option value="">— Select Cost Centre —</option>
+                    <option>CC-ENG — Engineering</option>
+                    <option>CC-MKT — Marketing</option>
+                    <option>CC-FIN — Finance</option>
+                    <option>CC-OPS — Operations</option>
+                    <option>CC-IT — IT &amp; Infrastructure</option>
+                    <option>CC-HR — Human Resources</option>
+                    <option>CC-ADM — Administration</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Approval Required From</label>
+                  <select id="vinv-nonpo-approver">
+                    <option>Vishal Bhavsar (Head of Procurement)</option>
+                    <option>Ravi Sharma (Dept Approver)</option>
+                    <option>Ankit Jain (Finance Head)</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Business Justification</label>
+                  <input type="text" id="vinv-nonpo-justification" placeholder="e.g. Emergency repair — office AC unit"/>
+                </div>
+              </div>
+              <div id="vinv-nonpo-ready" style="display:none;margin-top:12px;padding:12px 14px;border-radius:8px;background:#f0fdf4;border:1px solid #6ee7b7;color:#065f46;font-size:13px;font-weight:600">
+                ✅ Non-PO classification complete — proceed to fill invoice details below
+              </div>
+              <button class="btn btn-primary" onclick="confirmNonPOStep()" style="margin-top:12px">Confirm &amp; Continue →</button>
             </div>
           </div>
 
@@ -5735,6 +5867,119 @@ let vinvSelectedPO = null;
 let vinvFile = null;
 const GST_SLABS_VINV = [0,0.1,0.25,1.5,3,5,6,12,18,28];
 
+let currentVendorInvType = 'po'; // 'po' | 'nonpo'
+
+function setVendorInvType(type) {
+  currentVendorInvType = type;
+  const isPO = type === 'po';
+
+  // Toggle card styles
+  const poCard    = document.getElementById('vinv-type-po');
+  const nonpoCard = document.getElementById('vinv-type-nonpo');
+  const poCheck   = document.getElementById('vinv-type-po-check');
+  const nonpoCheck= document.getElementById('vinv-type-nonpo-check');
+
+  if(isPO){
+    poCard.style.borderColor    = 'var(--primary)';
+    poCard.style.background     = 'var(--primary-light)';
+    poCheck.style.background    = 'var(--primary)';
+    poCheck.style.color         = '#fff';
+    nonpoCard.style.borderColor = 'var(--border)';
+    nonpoCard.style.background  = 'var(--surface)';
+    nonpoCheck.style.background = 'var(--border)';
+    nonpoCheck.style.color      = 'transparent';
+  } else {
+    nonpoCard.style.borderColor = '#f59e0b';
+    nonpoCard.style.background  = '#fffbeb';
+    nonpoCheck.style.background = '#f59e0b';
+    nonpoCheck.style.color      = '#fff';
+    poCard.style.borderColor    = 'var(--border)';
+    poCard.style.background     = 'var(--surface)';
+    poCheck.style.background    = 'var(--border)';
+    poCheck.style.color         = 'transparent';
+  }
+
+  // Show/hide step1 fields
+  const poFields    = document.getElementById('vinv-step1-po-fields');
+  const nonpoFields = document.getElementById('vinv-step1-nonpo-fields');
+  if(poFields)    poFields.style.display    = isPO ? 'block' : 'none';
+  if(nonpoFields) nonpoFields.style.display = isPO ? 'none'  : 'block';
+
+  // Update Step 1 header and label
+  const hdr = document.getElementById('vinv-step1-header');
+  const lbl = document.getElementById('vstep-1-label');
+  if(isPO){
+    if(hdr) hdr.innerHTML = '<span class="card-title">🔍 Step 1 — Find Your Purchase Order</span><span style="font-size:12px;color:var(--text-3)">Enter the PO number provided by the buyer</span>';
+    if(lbl) lbl.textContent = 'PO Lookup';
+  } else {
+    if(hdr) hdr.innerHTML = '<span class="card-title">🏷 Step 1 — Expense Classification</span><span style="font-size:12px;color:var(--text-3)">Classify this non-PO invoice for routing</span>';
+    if(lbl) lbl.textContent = 'Expense Info';
+  }
+
+  // Update banner subtitle and badge
+  const bannerSub = document.getElementById('vinv-banner-sub');
+  const badge     = document.getElementById('vinv-type-badge');
+  if(isPO){
+    if(bannerSub) bannerSub.textContent = 'Submit your tax invoice against an approved Purchase Order. Invoice will be matched against the PO automatically.';
+    if(badge){ badge.textContent = '📋 PO Based'; badge.style.background = 'rgba(99,102,241,0.25)'; badge.style.color = '#a5b4fc'; }
+  } else {
+    if(bannerSub) bannerSub.textContent = 'Submit a Non-PO invoice for direct expenses. The invoice will be routed for manual approval based on the expense category and GL code.';
+    if(badge){ badge.textContent = '🧾 Non-PO'; badge.style.background = 'rgba(245,158,11,0.25)'; badge.style.color = '#fcd34d'; }
+  }
+
+  // Reset form state
+  resetVendorInvFormPartial();
+  setVendorInvStep(1);
+}
+
+function confirmNonPOStep() {
+  const vendor = document.getElementById('vinv-nonpo-vendor')?.value;
+  const cat    = document.getElementById('vinv-nonpo-cat')?.value;
+  if(!vendor){ toast('Please select your vendor name','error'); return; }
+  if(!cat)   { toast('Please select an expense category','error'); return; }
+
+  const readyEl = document.getElementById('vinv-nonpo-ready');
+  if(readyEl) readyEl.style.display = 'block';
+
+  // Store in vinvSelectedPO mock for non-PO
+  vinvSelectedPO = {
+    id: 'NON-PO',
+    title: document.getElementById('vinv-nonpo-cat')?.selectedOptions[0]?.text || cat,
+    vendor,
+    status: 'Approved',
+    amount: 0, gst: 0, total: 0,
+    isNonPO: true,
+    expenseCat: cat,
+    glCode: document.getElementById('vinv-nonpo-gl')?.value || '',
+    costCentre: document.getElementById('vinv-nonpo-cc')?.value || '',
+    approver: document.getElementById('vinv-nonpo-approver')?.value || '',
+    justification: document.getElementById('vinv-nonpo-justification')?.value || '',
+  };
+
+  // Pre-fill vendor GSTIN if known
+  const vendorData = db.vendors.find(v=>v.name===vendor)||{};
+  const gstinEl = document.getElementById('vinv-gstin');
+  if(gstinEl && vendorData.gstin && vendorData.gstin!=='N/A') gstinEl.value = vendorData.gstin;
+
+  vinvItems = [{desc:'',hsn:'',qty:1,uom:'Nos',rate:0,gst:18}];
+  renderVendorInvItems();
+  toast('Expense classification confirmed — fill in invoice details below','success');
+  setVendorInvStep(4);
+}
+
+function resetVendorInvFormPartial() {
+  vinvSelectedPO = null;
+  vinvFile = null;
+  const s=document.getElementById('vinv-po-search');
+  if(s) s.value='';
+  const res=document.getElementById('vinv-po-result');
+  if(res) res.style.display='none';
+  const err=document.getElementById('vinv-po-error');
+  if(err) err.style.display='none';
+  const rdy=document.getElementById('vinv-nonpo-ready');
+  if(rdy) rdy.style.display='none';
+}
+
 function initVendorInvForm(){
   vinvItems = [{desc:'',hsn:'',qty:1,uom:'Nos',rate:0,gst:18}];
   vinvSelectedPO = null;
@@ -5951,21 +6196,22 @@ function clearVendorInvFile(){
 }
 
 function submitVendorInvoice(){
+  const isNonPO = currentVendorInvType === 'nonpo';
+
   // Validations
-  if(!vinvSelectedPO){ toast('Please look up a PO first','error'); return; }
+  if(!vinvSelectedPO){ toast(isNonPO ? 'Please confirm expense classification first' : 'Please look up a PO first','error'); return; }
   const invNo   = document.getElementById('vinv-number')?.value.trim();
   const invDate = document.getElementById('vinv-date')?.value;
   const gstin   = document.getElementById('vinv-gstin')?.value.trim();
   if(!invNo)  { toast('Invoice number is required','error'); return; }
   if(!invDate){ toast('Invoice date is required','error'); return; }
-  if(!gstin)  { toast('Your GSTIN is required','error'); return; }
+  if(!isNonPO && !gstin){ toast('Your GSTIN is required','error'); return; }
   if(vinvItems.every(li=>!li.rate)){ toast('Please enter unit rates for at least one line item','error'); return; }
   if(!vinvFile) { toast('Please attach the invoice PDF/image','error'); return; }
 
   const chks = [1,2,3,4,5].map(n=>document.getElementById('vinv-chk'+n)?.checked);
   if(!chks.every(c=>c)){ toast('Please tick all checklist items before submitting','error'); return; }
 
-  // Check for duplicate invoice number
   if(db.invoices.find(i=>i.id===invNo)){
     toast('Invoice '+invNo+' already exists in the system','error'); return;
   }
@@ -5974,38 +6220,61 @@ function submitVendorInvoice(){
   const totGst = vinvItems.reduce((a,li)=>a+(li.qty*li.rate*(li.gst/100)),0);
   const totTot = Math.round((totSub+totGst)*100)/100;
 
-  const variance = totTot - vinvSelectedPO.total;
-  const matchStatus = Math.abs(variance) < 1 ? 'Matched'
-    : Math.abs(variance)/vinvSelectedPO.total < 0.1 ? 'Partially Matched'
-    : 'Unmatched';
+  let matchStatus, poId, poValue;
+  if(isNonPO){
+    matchStatus = 'Non-PO';
+    poId = '';
+    poValue = 0;
+  } else {
+    const variance = totTot - vinvSelectedPO.total;
+    matchStatus = Math.abs(variance) < 1 ? 'Matched'
+      : Math.abs(variance)/vinvSelectedPO.total < 0.1 ? 'Partially Matched'
+      : 'Unmatched';
+    poId = vinvSelectedPO.id;
+    poValue = vinvSelectedPO.total;
+  }
 
-  // Submit invoice to db
   db.invoices.unshift({
-    id:invNo, date:invDate, vendor:vinvSelectedPO.vendor, gstin,
+    id:invNo, date:invDate,
+    vendor: isNonPO ? (vinvSelectedPO.vendor||'—') : vinvSelectedPO.vendor,
+    gstin,
     taxable:Math.round(totSub), gst:Math.round(totGst), total:Math.round(totTot),
-    poId:vinvSelectedPO.id, poValue:vinvSelectedPO.total,
-    matchStatus, status: matchStatus==='Matched'?'Approved':'On Hold',
+    poId, poValue,
+    matchStatus,
+    status: (matchStatus==='Matched') ? 'Approved' : 'On Hold',
     uploadedOn:new Date().toISOString().slice(0,10), ocrConf:100,
     submittedByVendor:true,
+    invoiceType: isNonPO ? 'Non-PO' : 'PO-Based',
+    expenseCat: isNonPO ? vinvSelectedPO.expenseCat : '',
+    glCode:     isNonPO ? vinvSelectedPO.glCode : '',
+    costCentre: isNonPO ? vinvSelectedPO.costCentre : '',
   });
 
   db.auditLog.unshift({
     ts:new Date().toLocaleString(), event:'Create', entity:'Invoice', entityId:invNo,
-    actor:vinvSelectedPO.vendor, role:'Vendor',
-    detail:`Vendor submitted Invoice ${invNo} against ${vinvSelectedPO.id} — ₹${Math.round(totTot).toLocaleString('en-IN')} · Match: ${matchStatus}`
+    actor: isNonPO ? (vinvSelectedPO.vendor||'Vendor') : vinvSelectedPO.vendor,
+    role:'Vendor',
+    detail: isNonPO
+      ? `Non-PO Invoice ${invNo} submitted — ${vinvSelectedPO.expenseCat} | GL: ${vinvSelectedPO.glCode} — ₹${Math.round(totTot).toLocaleString('en-IN')}`
+      : `Vendor submitted Invoice ${invNo} against ${vinvSelectedPO.id} — ₹${Math.round(totTot).toLocaleString('en-IN')} · Match: ${matchStatus}`
   });
 
   updateInvoiceKPIs();
-  toast(`✅ Invoice ${invNo} submitted successfully! Status: ${matchStatus}`,'success');
+  toast(
+    isNonPO
+      ? `✅ Non-PO Invoice ${invNo} submitted — pending manual approval`
+      : `✅ Invoice ${invNo} submitted successfully! Status: ${matchStatus}`,
+    'success'
+  );
 
-  // Show confirmation and reset
   setTimeout(()=>{
     resetVendorInvForm();
     switchInvoiceView('register', document.getElementById('inv-tab-register'));
   }, 1500);
 }
-
 function resetVendorInvForm(){
+  currentVendorInvType = 'po';
+  setVendorInvType('po');
   initVendorInvForm();
   ['vinv-number','vinv-gstin','vinv-pan','vinv-narration','vinv-bank'].forEach(id=>{
     const el=document.getElementById(id); if(el) el.value='';
