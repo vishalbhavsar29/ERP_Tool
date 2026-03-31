@@ -67,7 +67,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);dis
 .topbar-title{font-size:18px;font-weight:700;color:var(--text);letter-spacing:-0.4px}
 .topbar-sub{font-size:13px;color:var(--text-3);margin-left:4px}
 .topbar-actions{margin-left:auto;display:flex;gap:10px;align-items:center}
-.content{flex:1 1 0;overflow-y:auto;overflow-x:hidden;padding:0;box-sizing:border-box;scroll-behavior:auto;scrollbar-width:thin;scrollbar-color:#94a3b8 #e8edf2}.content::-webkit-scrollbar{width:8px}.content::-webkit-scrollbar-track{background:#e8edf2}.content::-webkit-scrollbar-thumb{background:#94a3b8;border-radius:4px;min-height:40px}.content::-webkit-scrollbar-thumb:hover{background:#475569}
+.content{flex:1;height:0;min-height:0;overflow-y:auto;overflow-x:hidden;padding:0;box-sizing:border-box;scroll-behavior:auto;scrollbar-width:thin;scrollbar-color:#94a3b8 #e8edf2}.content::-webkit-scrollbar{width:8px;display:block}.content::-webkit-scrollbar-track{background:#e8edf2}.content::-webkit-scrollbar-thumb{background:#94a3b8;border-radius:4px;min-height:40px}.content::-webkit-scrollbar-thumb:hover{background:#475569}
 /* BUTTONS */
 .btn{display:inline-flex;align-items:center;gap:7px;padding:8px 16px;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13.5px;font-weight:600;cursor:pointer;border:none;transition:all 0.15s;white-space:nowrap}
 .btn-primary{background:var(--primary);color:#fff}
@@ -2149,37 +2149,38 @@ textarea{resize:vertical;min-height:80px}
         <div id="inv-view-upload">
 
           <!-- PO / Non-PO type selector -->
-          <div style="display:flex;gap:12px;margin-bottom:16px">
+          <div style="display:flex;gap:0;margin-bottom:16px;border:2px solid var(--border);border-radius:12px;overflow:hidden;background:var(--card)">
             <div id="upload-type-po" onclick="setUploadType('po')"
-              style="flex:1;padding:12px 16px;border-radius:10px;border:2px solid var(--primary);background:var(--primary-light);cursor:pointer;transition:all 0.15s">
+              style="flex:1;padding:14px 18px;background:var(--primary);cursor:pointer;transition:background 0.15s;user-select:none">
               <div style="display:flex;align-items:center;gap:10px">
                 <span style="font-size:20px">📋</span>
                 <div style="flex:1">
-                  <div style="font-size:13.5px;font-weight:800;color:var(--primary)">PO Based Invoice</div>
-                  <div style="font-size:12px;color:var(--text-2);margin-top:2px">Matched against an approved Purchase Order</div>
+                  <div id="upload-po-title" style="font-size:14px;font-weight:800;color:#fff">PO Based Invoice</div>
+                  <div id="upload-po-sub" style="font-size:12px;color:rgba(255,255,255,0.8);margin-top:2px">Matched against an approved Purchase Order</div>
                 </div>
-                <span id="upload-type-po-check" style="width:22px;height:22px;border-radius:50%;background:var(--primary);display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700;flex-shrink:0">✓</span>
+                <span id="upload-type-po-check" style="width:22px;height:22px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;color:var(--primary);font-size:13px;font-weight:900;flex-shrink:0">✓</span>
               </div>
               <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
-                <span style="font-size:11px;background:#dbeafe;color:#1e40af;padding:2px 8px;border-radius:4px;font-weight:600">Auto 3-way match</span>
-                <span style="font-size:11px;background:#dbeafe;color:#1e40af;padding:2px 8px;border-radius:4px;font-weight:600">PO variance check</span>
-                <span style="font-size:11px;background:#dbeafe;color:#1e40af;padding:2px 8px;border-radius:4px;font-weight:600">GRN reconciliation</span>
+                <span id="upload-po-tag1" style="font-size:11px;background:rgba(255,255,255,0.2);color:#fff;padding:2px 8px;border-radius:4px;font-weight:600">Auto 3-way match</span>
+                <span id="upload-po-tag2" style="font-size:11px;background:rgba(255,255,255,0.2);color:#fff;padding:2px 8px;border-radius:4px;font-weight:600">PO variance check</span>
+                <span id="upload-po-tag3" style="font-size:11px;background:rgba(255,255,255,0.2);color:#fff;padding:2px 8px;border-radius:4px;font-weight:600">GRN reconciliation</span>
               </div>
             </div>
+            <div style="width:2px;background:var(--border);flex-shrink:0"></div>
             <div id="upload-type-nonpo" onclick="setUploadType('nonpo')"
-              style="flex:1;padding:12px 16px;border-radius:10px;border:2px solid var(--border);background:var(--surface);cursor:pointer;transition:all 0.15s">
+              style="flex:1;padding:14px 18px;background:var(--surface);cursor:pointer;transition:background 0.15s;user-select:none">
               <div style="display:flex;align-items:center;gap:10px">
                 <span style="font-size:20px">🧾</span>
                 <div style="flex:1">
-                  <div style="font-size:13.5px;font-weight:800;color:var(--text)">Non-PO Invoice</div>
-                  <div style="font-size:12px;color:var(--text-2);margin-top:2px">Direct expense without a Purchase Order</div>
+                  <div id="upload-nonpo-title" style="font-size:14px;font-weight:800;color:var(--text)">Non-PO Invoice</div>
+                  <div id="upload-nonpo-sub" style="font-size:12px;color:var(--text-2);margin-top:2px">Direct expense without a Purchase Order</div>
                 </div>
-                <span id="upload-type-nonpo-check" style="width:22px;height:22px;border-radius:50%;background:var(--border);display:flex;align-items:center;justify-content:center;color:transparent;font-size:12px;font-weight:700;flex-shrink:0">✓</span>
+                <span id="upload-type-nonpo-check" style="width:22px;height:22px;border-radius:50%;background:var(--border);display:flex;align-items:center;justify-content:center;color:transparent;font-size:13px;font-weight:900;flex-shrink:0">✓</span>
               </div>
               <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
-                <span style="font-size:11px;background:#f1f5f9;color:#475569;padding:2px 8px;border-radius:4px;font-weight:600">Expense category</span>
-                <span style="font-size:11px;background:#f1f5f9;color:#475569;padding:2px 8px;border-radius:4px;font-weight:600">GL account code</span>
-                <span style="font-size:11px;background:#f1f5f9;color:#475569;padding:2px 8px;border-radius:4px;font-weight:600">Cost centre</span>
+                <span id="upload-nonpo-tag1" style="font-size:11px;background:#f1f5f9;color:#475569;padding:2px 8px;border-radius:4px;font-weight:600">Expense category</span>
+                <span id="upload-nonpo-tag2" style="font-size:11px;background:#f1f5f9;color:#475569;padding:2px 8px;border-radius:4px;font-weight:600">GL account code</span>
+                <span id="upload-nonpo-tag3" style="font-size:11px;background:#f1f5f9;color:#475569;padding:2px 8px;border-radius:4px;font-weight:600">Cost centre</span>
               </div>
             </div>
           </div>
@@ -2355,38 +2356,39 @@ textarea{resize:vertical;min-height:80px}
             <div id="vinv-type-badge" style="flex-shrink:0;padding:4px 12px;border-radius:16px;background:rgba(99,102,241,0.25);border:1px solid rgba(99,102,241,0.5);color:#a5b4fc;font-size:12px;font-weight:700">📋 PO Based</div>
           </div>
 
-          <!-- PO / Non-PO type selector -->
-          <div style="display:flex;gap:12px;margin-bottom:16px">
+          <!-- PO / Non-PO type selector — tab style -->
+          <div style="display:flex;gap:0;margin-bottom:16px;border:2px solid var(--border);border-radius:12px;overflow:hidden">
             <div id="vinv-type-po" onclick="setVendorInvType('po')"
-              style="flex:1;padding:12px 16px;border-radius:10px;border:2px solid var(--primary);background:var(--primary-light);cursor:pointer;transition:all 0.15s">
+              style="flex:1;padding:14px 20px;cursor:pointer;transition:all 0.15s;background:var(--primary);user-select:none">
               <div style="display:flex;align-items:center;gap:10px">
                 <span style="font-size:20px">📋</span>
                 <div style="flex:1">
-                  <div style="font-size:13.5px;font-weight:800;color:var(--primary)">PO Based Invoice</div>
-                  <div style="font-size:12px;color:var(--text-2)">Invoice raised against an approved Purchase Order</div>
+                  <div id="vinv-type-po-label" style="font-size:14px;font-weight:800;color:#fff">PO Based Invoice</div>
+                  <div style="font-size:12px;color:rgba(255,255,255,0.75);margin-top:2px">Matched against an approved Purchase Order</div>
                 </div>
-                <span id="vinv-type-po-check" style="width:22px;height:22px;border-radius:50%;background:var(--primary);display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700;flex-shrink:0">✓</span>
+                <span id="vinv-type-po-check" style="width:22px;height:22px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;color:var(--primary);font-size:13px;font-weight:800;flex-shrink:0">✓</span>
               </div>
               <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
-                <span style="font-size:11px;background:#dbeafe;color:#1e40af;padding:2px 8px;border-radius:4px;font-weight:600">Auto 3-way match</span>
-                <span style="font-size:11px;background:#dbeafe;color:#1e40af;padding:2px 8px;border-radius:4px;font-weight:600">PO variance check</span>
-                <span style="font-size:11px;background:#dbeafe;color:#1e40af;padding:2px 8px;border-radius:4px;font-weight:600">GRN reconciliation</span>
+                <span style="font-size:11px;background:rgba(255,255,255,0.2);color:#fff;padding:2px 8px;border-radius:4px;font-weight:600">Auto 3-way match</span>
+                <span style="font-size:11px;background:rgba(255,255,255,0.2);color:#fff;padding:2px 8px;border-radius:4px;font-weight:600">PO variance check</span>
+                <span style="font-size:11px;background:rgba(255,255,255,0.2);color:#fff;padding:2px 8px;border-radius:4px;font-weight:600">GRN reconciliation</span>
               </div>
             </div>
+            <div style="width:2px;background:var(--border);flex-shrink:0"></div>
             <div id="vinv-type-nonpo" onclick="setVendorInvType('nonpo')"
-              style="flex:1;padding:12px 16px;border-radius:10px;border:2px solid var(--border);background:var(--surface);cursor:pointer;transition:all 0.15s">
+              style="flex:1;padding:14px 20px;cursor:pointer;transition:all 0.15s;background:var(--surface);user-select:none">
               <div style="display:flex;align-items:center;gap:10px">
                 <span style="font-size:20px">🧾</span>
                 <div style="flex:1">
-                  <div style="font-size:13.5px;font-weight:800;color:var(--text)">Non-PO Invoice</div>
-                  <div style="font-size:12px;color:var(--text-2)">Direct expense without a Purchase Order</div>
+                  <div id="vinv-type-nonpo-label" style="font-size:14px;font-weight:800;color:var(--text)">Non-PO Invoice</div>
+                  <div style="font-size:12px;color:var(--text-2);margin-top:2px">Direct expense without a Purchase Order</div>
                 </div>
-                <span id="vinv-type-nonpo-check" style="width:22px;height:22px;border-radius:50%;background:var(--border);display:flex;align-items:center;justify-content:center;color:transparent;font-size:12px;font-weight:700;flex-shrink:0">✓</span>
+                <span id="vinv-type-nonpo-check" style="width:22px;height:22px;border-radius:50%;background:var(--border);display:flex;align-items:center;justify-content:center;color:transparent;font-size:13px;font-weight:800;flex-shrink:0">✓</span>
               </div>
               <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
-                <span style="font-size:11px;background:#f1f5f9;color:#475569;padding:2px 8px;border-radius:4px;font-weight:600">Expense category</span>
-                <span style="font-size:11px;background:#f1f5f9;color:#475569;padding:2px 8px;border-radius:4px;font-weight:600">GL account code</span>
-                <span style="font-size:11px;background:#f1f5f9;color:#475569;padding:2px 8px;border-radius:4px;font-weight:600">Manual approval</span>
+                <span style="font-size:11px;background:var(--border);color:var(--text-2);padding:2px 8px;border-radius:4px;font-weight:600">Expense category</span>
+                <span style="font-size:11px;background:var(--border);color:var(--text-2);padding:2px 8px;border-radius:4px;font-weight:600">GL account code</span>
+                <span style="font-size:11px;background:var(--border);color:var(--text-2);padding:2px 8px;border-radius:4px;font-weight:600">Manual approval</span>
               </div>
             </div>
           </div>
@@ -6827,24 +6829,38 @@ function setUploadType(type) {
   const poCheck   = document.getElementById('upload-type-po-check');
   const nonpoCheck= document.getElementById('upload-type-nonpo-check');
 
-  if(isPO){
-    poCard.style.borderColor    = 'var(--primary)';
-    poCard.style.background     = 'var(--primary-light)';
-    poCheck.style.background    = 'var(--primary)';
-    poCheck.style.color         = '#fff';
-    nonpoCard.style.borderColor = 'var(--border)';
-    nonpoCard.style.background  = 'var(--surface)';
-    nonpoCheck.style.background = 'var(--border)';
-    nonpoCheck.style.color      = 'transparent';
-  } else {
-    nonpoCard.style.borderColor = '#f59e0b';
-    nonpoCard.style.background  = '#fffbeb';
-    nonpoCheck.style.background = '#f59e0b';
-    nonpoCheck.style.color      = '#fff';
-    poCard.style.borderColor    = 'var(--border)';
-    poCard.style.background     = 'var(--surface)';
-    poCheck.style.background    = 'var(--border)';
-    poCheck.style.color         = 'transparent';
+  // ── PO card: active = solid blue, inactive = surface ──
+  if(poCard){
+    poCard.style.background = isPO ? 'var(--primary)' : 'var(--surface)';
+  }
+  const poTitle  = document.getElementById('upload-po-title');
+  const poSub    = document.getElementById('upload-po-sub');
+  const poTag1   = document.getElementById('upload-po-tag1');
+  const poTag2   = document.getElementById('upload-po-tag2');
+  const poTag3   = document.getElementById('upload-po-tag3');
+  if(poTitle) poTitle.style.color = isPO ? '#fff' : 'var(--text)';
+  if(poSub)   poSub.style.color   = isPO ? 'rgba(255,255,255,0.8)' : 'var(--text-2)';
+  [poTag1,poTag2,poTag3].forEach(t=>{ if(t){ t.style.background = isPO ? 'rgba(255,255,255,0.2)' : '#f1f5f9'; t.style.color = isPO ? '#fff' : '#475569'; }});
+  if(poCheck){
+    poCheck.style.background = isPO ? '#fff' : 'var(--border)';
+    poCheck.style.color      = isPO ? 'var(--primary)' : 'transparent';
+  }
+
+  // ── Non-PO card: active = amber, inactive = surface ──
+  if(nonpoCard){
+    nonpoCard.style.background = !isPO ? '#f59e0b' : 'var(--surface)';
+  }
+  const npTitle  = document.getElementById('upload-nonpo-title');
+  const npSub    = document.getElementById('upload-nonpo-sub');
+  const npTag1   = document.getElementById('upload-nonpo-tag1');
+  const npTag2   = document.getElementById('upload-nonpo-tag2');
+  const npTag3   = document.getElementById('upload-nonpo-tag3');
+  if(npTitle) npTitle.style.color = !isPO ? '#fff' : 'var(--text)';
+  if(npSub)   npSub.style.color   = !isPO ? 'rgba(255,255,255,0.85)' : 'var(--text-2)';
+  [npTag1,npTag2,npTag3].forEach(t=>{ if(t){ t.style.background = !isPO ? 'rgba(255,255,255,0.25)' : '#f1f5f9'; t.style.color = !isPO ? '#fff' : '#475569'; }});
+  if(nonpoCheck){
+    nonpoCheck.style.background = !isPO ? '#fff' : 'var(--border)';
+    nonpoCheck.style.color      = !isPO ? '#f59e0b' : 'transparent';
   }
 
   // Show/hide non-PO fields
@@ -6925,24 +6941,38 @@ function setVendorInvType(type) {
   const poCheck   = document.getElementById('vinv-type-po-check');
   const nonpoCheck= document.getElementById('vinv-type-nonpo-check');
 
-  if(isPO){
-    poCard.style.borderColor    = 'var(--primary)';
-    poCard.style.background     = 'var(--primary-light)';
-    poCheck.style.background    = 'var(--primary)';
-    poCheck.style.color         = '#fff';
-    nonpoCard.style.borderColor = 'var(--border)';
-    nonpoCard.style.background  = 'var(--surface)';
-    nonpoCheck.style.background = 'var(--border)';
-    nonpoCheck.style.color      = 'transparent';
-  } else {
-    nonpoCard.style.borderColor = '#f59e0b';
-    nonpoCard.style.background  = '#fffbeb';
-    nonpoCheck.style.background = '#f59e0b';
-    nonpoCheck.style.color      = '#fff';
-    poCard.style.borderColor    = 'var(--border)';
-    poCard.style.background     = 'var(--surface)';
-    poCheck.style.background    = 'var(--border)';
-    poCheck.style.color         = 'transparent';
+  // ── PO card: active = solid blue, inactive = surface ──
+  if(poCard){
+    poCard.style.background = isPO ? 'var(--primary)' : 'var(--surface)';
+  }
+  const poTitle  = document.getElementById('upload-po-title');
+  const poSub    = document.getElementById('upload-po-sub');
+  const poTag1   = document.getElementById('upload-po-tag1');
+  const poTag2   = document.getElementById('upload-po-tag2');
+  const poTag3   = document.getElementById('upload-po-tag3');
+  if(poTitle) poTitle.style.color = isPO ? '#fff' : 'var(--text)';
+  if(poSub)   poSub.style.color   = isPO ? 'rgba(255,255,255,0.8)' : 'var(--text-2)';
+  [poTag1,poTag2,poTag3].forEach(t=>{ if(t){ t.style.background = isPO ? 'rgba(255,255,255,0.2)' : '#f1f5f9'; t.style.color = isPO ? '#fff' : '#475569'; }});
+  if(poCheck){
+    poCheck.style.background = isPO ? '#fff' : 'var(--border)';
+    poCheck.style.color      = isPO ? 'var(--primary)' : 'transparent';
+  }
+
+  // ── Non-PO card: active = amber, inactive = surface ──
+  if(nonpoCard){
+    nonpoCard.style.background = !isPO ? '#f59e0b' : 'var(--surface)';
+  }
+  const npTitle  = document.getElementById('upload-nonpo-title');
+  const npSub    = document.getElementById('upload-nonpo-sub');
+  const npTag1   = document.getElementById('upload-nonpo-tag1');
+  const npTag2   = document.getElementById('upload-nonpo-tag2');
+  const npTag3   = document.getElementById('upload-nonpo-tag3');
+  if(npTitle) npTitle.style.color = !isPO ? '#fff' : 'var(--text)';
+  if(npSub)   npSub.style.color   = !isPO ? 'rgba(255,255,255,0.85)' : 'var(--text-2)';
+  [npTag1,npTag2,npTag3].forEach(t=>{ if(t){ t.style.background = !isPO ? 'rgba(255,255,255,0.25)' : '#f1f5f9'; t.style.color = !isPO ? '#fff' : '#475569'; }});
+  if(nonpoCheck){
+    nonpoCheck.style.background = !isPO ? '#fff' : 'var(--border)';
+    nonpoCheck.style.color      = !isPO ? '#f59e0b' : 'transparent';
   }
 
   // Show/hide step1 fields
