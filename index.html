@@ -1576,25 +1576,47 @@ textarea{resize:vertical;min-height:80px}
     <!-- APPROVALS PAGE -->
     <div class="page" id="page-approvals">
       <div style="display:grid;grid-template-columns:340px 1fr;gap:16px;min-height:0">
+
+        <!-- Left panel -->
         <div class="card" style="display:flex;flex-direction:column;max-height:calc(100vh - 130px)">
-          <div class="card-header" style="flex-shrink:0">
-            <span class="card-title">⏳ Pending Approvals</span>
-            <span class="badge badge-review" id="pending-count-badge">3 pending</span>
+          <div class="card-header" style="flex-shrink:0;flex-direction:column;align-items:stretch;gap:10px">
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <span class="card-title">⏳ Pending Approvals</span>
+              <span class="badge badge-review" id="pending-count-badge">0 pending</span>
+            </div>
+            <!-- Filter tabs -->
+            <div style="display:flex;gap:0;border:1.5px solid var(--border);border-radius:8px;overflow:hidden">
+              <button id="appr-filter-all" onclick="setApprovalFilter('all',this)"
+                style="flex:1;padding:6px 0;border:none;background:var(--primary);color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:all 0.15s">
+                All
+              </button>
+              <button id="appr-filter-po" onclick="setApprovalFilter('po',this)"
+                style="flex:1;padding:6px 0;border:none;border-left:1px solid var(--border);background:#fff;color:var(--text-2);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all 0.15s">
+                📋 POs
+              </button>
+              <button id="appr-filter-vendor" onclick="setApprovalFilter('vendor',this)"
+                style="flex:1;padding:6px 0;border:none;border-left:1px solid var(--border);background:#fff;color:var(--text-2);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all 0.15s">
+                🏢 Vendors
+              </button>
+            </div>
           </div>
           <div style="flex:1;overflow-y:auto" id="pending-approvals-list"></div>
         </div>
+
+        <!-- Right panel -->
         <div class="card" style="display:flex;flex-direction:column;max-height:calc(100vh - 130px);overflow:hidden">
           <div class="card-header" style="flex-shrink:0">
-            <span class="card-title">📄 PO Detail — Approval View</span>
+            <span class="card-title" id="approval-panel-title">📄 Approval Detail</span>
           </div>
           <div class="card-body" id="approval-detail-panel" style="flex:1;overflow-y:auto;padding:16px 18px">
             <div class="empty-state">
               <div class="icon">👈</div>
-              <h3>Select a PO to review</h3>
-              <p>Click a pending approval on the left</p>
+              <h3>Select an item to review</h3>
+              <p>Click a pending approval on the left to view details</p>
             </div>
           </div>
         </div>
+
       </div>
     </div>
 
@@ -4582,6 +4604,7 @@ function submitVendor() {
   closeVendorModal();
   renderVendors('', '', '', '');
   updateVendorKPIs();
+  updateApprovalBadge();
   toast(`Vendor onboarded — Sub Vendor Code: ${subVendorCode || 'Not assigned'}${msmeStatus && msmeStatus !== 'Not Applicable' ? ' | MSME: '+msmeStatus : ''}${!isReg?' — Finance notified of RCM applicability':''}`);
 }
 
@@ -5231,7 +5254,7 @@ function submitDraftPO(id){
 
 // ===== CREATE PO =====
 function initCreatePO() {
-  db.lineItems=[{desc:'',qty:1,uom:'Pcs',code:'',gst:18,rate:0,startDate:'',endDate:'',renewalDate:''}];
+  db.lineItems=[{desc:'',qty:1,uom:'Pcs',code:'',gst:18,rate:0,startDate:'',endDate:'',renewalDate:'',deliveryDate:''}];
   db.lineItemType='goods';
   db.currencyCode   = 'INR';
   db.currencySymbol = '₹';
@@ -5878,7 +5901,7 @@ function renderLineItems() {
     <th>Qty *</th>
     <th>UOM *</th>
     <th>${isGoods ? 'HSN' : 'SAC'} *</th>
-    ${isGoods ? '' : '<th>Start Date</th><th>End Date</th><th style="white-space:nowrap;color:#0891b2">Renewal Date</th>'}
+    ${isGoods ? '<th style="white-space:nowrap;color:#16a34a">Delivery Date</th>' : '<th>Start Date</th><th>End Date</th><th style="white-space:nowrap;color:#0891b2">Renewal Date</th>'}
     ${taxCols}
     <th>Unit Rate (${sym}) *</th>
     <th>Subtotal</th>
@@ -5971,7 +5994,13 @@ function renderLineItems() {
       <td><input type="number" value="${li.qty}" min="1" style="width:60px" oninput="db.lineItems[${i}].qty=+this.value;renderLineItems()"/></td>
       <td><select onchange="db.lineItems[${i}].uom=this.value">${uoms.map(u=>`<option ${u===li.uom?'selected':''}>${u}</option>`).join('')}</select></td>
       <td><input value="${li.code||''}" placeholder="${isGoods?'HSN':'SAC'}" oninput="db.lineItems[${i}].code=this.value" style="width:80px"/></td>
-      ${isGoods ? '' : `
+      ${isGoods ? `
+        <td style="background:#f0fdf4"><input type="date" value="${li.deliveryDate||''}"
+          style="width:120px;border:none;background:transparent;padding:4px 6px;font-size:13px;outline:none;color:#16a34a;font-weight:600"
+          oninput="db.lineItems[${i}].deliveryDate=this.value;validateDeliveryDate(${i})"
+          onfocus="this.style.background='#dcfce7'" onblur="this.style.background='transparent'"
+          title="Expected delivery date for this goods line item"/></td>
+      ` : `
         <td><input type="date" value="${li.startDate||''}" style="width:120px;border:none;background:transparent;padding:4px 6px;font-size:13px;outline:none" oninput="db.lineItems[${i}].startDate=this.value;validateServiceDates(${i})" onfocus="this.style.background='var(--primary-light)'" onblur="this.style.background='transparent'"/></td>
         <td><input type="date" value="${li.endDate||''}" style="width:120px;border:none;background:transparent;padding:4px 6px;font-size:13px;outline:none" oninput="db.lineItems[${i}].endDate=this.value;validateServiceDates(${i})" onfocus="this.style.background='var(--primary-light)'" onblur="this.style.background='transparent'"/></td>
         <td style="background:#f0f9ff"><input type="date" value="${li.renewalDate||''}" style="width:120px;border:none;background:transparent;padding:4px 6px;font-size:13px;outline:none;color:#0891b2;font-weight:600" oninput="db.lineItems[${i}].renewalDate=this.value" onfocus="this.style.background='#e0f2fe'" onblur="this.style.background='transparent'" title="Renewal Date — date on which this service line auto-renews or requires review"/></td>
@@ -5990,7 +6019,7 @@ function renderLineItems() {
   const totTotal = totSub + totTax;
   const allNilRated = db.lineItems.every(li => (li.gst || 0) === 0);
   // col span = fixed cols + tax cols
-  const fixedCols = isGoods ? 5 : 8; // #, desc, qty, uom, sac, start, end, renewal
+  const fixedCols = isGoods ? 6 : 8; // goods: #,desc,qty,uom,hsn,deliveryDate | services: #,desc,qty,uom,sac,start,end,renewal
   const taxExtraCols = isForeign ? 2 : isSplit ? 3 : 2;
   // subtotal label spans: fixedCols + taxExtraCols
   const subtotalSpan = fixedCols + taxExtraCols;
@@ -6035,7 +6064,7 @@ function renderLineItems() {
 
   recalcCurrencyTotal();
 }
-function addLineItem(){db.lineItems.push({desc:'',qty:1,uom:'Pcs',code:'',gst:18,rate:0,startDate:'',endDate:'',renewalDate:''});renderLineItems();}
+function addLineItem(){db.lineItems.push({desc:'',qty:1,uom:'Pcs',code:'',gst:18,rate:0,startDate:'',endDate:'',renewalDate:'',deliveryDate:''});renderLineItems();}
 function removeLineItem(i){if(db.lineItems.length>1){db.lineItems.splice(i,1);renderLineItems();}}
 function addExtraApprover(){
   const name=prompt('Enter approver name:');
@@ -6045,6 +6074,15 @@ function addExtraApprover(){
     toast(`${name} added as extra approver`,'info');
   }
 }
+function validateDeliveryDate(i) {
+  const li = db.lineItems[i];
+  if(!li || !li.deliveryDate) return;
+  const today = new Date().toISOString().slice(0,10);
+  if(li.deliveryDate < today) {
+    toast(`Line item ${i+1}: Delivery Date is in the past — please verify`, 'error');
+  }
+}
+
 function validateServiceDates(i) {
   const li = db.lineItems[i];
   if(!li) return;
@@ -6089,6 +6127,16 @@ function submitPO(){
   if(!title){toast('Please enter a PO title','error');return;}
   if(!vendor){toast('Please select a vendor','error');return;}
   if(db.lineItems.every(li=>!li.rate)){toast('Please enter unit rates for line items','error');return;}
+  // Validate goods delivery dates
+  if(db.lineItemType==='goods') {
+    const today = new Date().toISOString().slice(0,10);
+    for(let i=0;i<db.lineItems.length;i++){
+      const li=db.lineItems[i];
+      if(li.deliveryDate && li.deliveryDate < today){
+        toast(`Line item ${i+1}: Delivery Date is in the past — please verify`,'error'); return;
+      }
+    }
+  }
   // Validate service dates
   if(db.lineItemType==='services') {
     for(let i=0;i<db.lineItems.length;i++){
@@ -6118,33 +6166,319 @@ function submitPO(){
 
 // ===== APPROVALS =====
 const pendingPOs=['PO-2026-0047','PO-2026-0045','PO-2026-0043'];
-let selectedPOId=null;
+let selectedPOId     = null;
+let selectedVendorId = null;
+let currentApprovalFilter = 'all'; // 'all' | 'po' | 'vendor'
+
+/* ── Filter tabs ── */
+function setApprovalFilter(filter, btnEl) {
+  currentApprovalFilter = filter;
+  ['all','po','vendor'].forEach(f => {
+    const b = document.getElementById('appr-filter-' + f);
+    if(!b) return;
+    b.style.background = '';
+    b.style.color      = 'var(--text-2)';
+  });
+  if(btnEl) {
+    btnEl.style.background = 'var(--primary)';
+    btnEl.style.color      = '#fff';
+  }
+  selectedPOId = null;
+  selectedVendorId = null;
+  renderApprovals();
+  document.getElementById('approval-detail-panel').innerHTML = `
+    <div class="empty-state">
+      <div class="icon">👈</div>
+      <h3>Select an item to review</h3>
+      <p>Click a pending approval on the left to view details</p>
+    </div>`;
+  document.getElementById('approval-panel-title').textContent = '📄 Approval Detail';
+}
 
 function renderApprovals(){
-  const list=document.getElementById('pending-approvals-list');
-  const pos=db.pos.filter(p=>p.status==='In Review');
-  list.innerHTML=pos.map(p=>`
-    <div onclick="selectPO('${p.id}')" style="padding:14px 18px;border-bottom:1px solid var(--border);cursor:pointer;transition:background 0.1s;${selectedPOId===p.id?'background:var(--primary-light);':''}">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start">
-        <div>
-          <div style="font-weight:700;font-size:13.5px;color:${selectedPOId===p.id?'var(--primary)':'var(--text)'}">${p.id}</div>
-          <div style="font-size:12.5px;color:var(--text-2);margin-top:2px">${p.title}</div>
-          <div style="font-size:12px;color:var(--text-3);margin-top:2px">${p.vendor} · ${p.dept}</div>
+  const list  = document.getElementById('pending-approvals-list');
+  const pendingPOList     = db.pos.filter(p => p.status === 'In Review');
+  const pendingVendorList = db.vendors.filter(v => v.status === 'Pending');
+
+  const showPOs     = currentApprovalFilter === 'all' || currentApprovalFilter === 'po';
+  const showVendors = currentApprovalFilter === 'all' || currentApprovalFilter === 'vendor';
+
+  const totalCount = (showPOs ? pendingPOList.length : 0) + (showVendors ? pendingVendorList.length : 0);
+  document.getElementById('pending-count-badge').textContent = `${totalCount} pending`;
+
+  let html = '';
+
+  // ── PO items ──
+  if(showPOs && pendingPOList.length) {
+    if(currentApprovalFilter === 'all') {
+      html += `<div style="padding:6px 14px 4px;font-size:10.5px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.7px;background:var(--surface);border-bottom:1px solid var(--border)">📋 Purchase Orders (${pendingPOList.length})</div>`;
+    }
+    html += pendingPOList.map(p => {
+      const isSelected = selectedPOId === p.id;
+      return `<div onclick="selectApprovalItem('po','${p.id}')" style="padding:13px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background 0.1s;background:${isSelected?'var(--primary-light)':''}">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+          <div style="flex:1;min-width:0">
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
+              <span style="font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:4px;background:#dbeafe;color:#1e40af;flex-shrink:0">PO</span>
+              <span style="font-weight:700;font-size:13px;color:${isSelected?'var(--primary)':'var(--text)'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.id}</span>
+            </div>
+            <div style="font-size:12.5px;color:var(--text-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.title}</div>
+            <div style="font-size:11.5px;color:var(--text-3);margin-top:2px">${p.vendor} · ${p.dept}</div>
+          </div>
+          <div style="text-align:right;flex-shrink:0">
+            <div style="font-weight:700;font-family:'DM Mono',monospace;font-size:12.5px">₹${p.total.toLocaleString('en-IN')}</div>
+            <div style="font-size:11px;color:var(--text-3);margin-top:3px">${p.created}</div>
+          </div>
         </div>
-        <div style="text-align:right">
-          <div style="font-weight:700;font-family:'DM Mono',monospace;font-size:13px">₹${p.total.toLocaleString('en-IN')}</div>
-          <div style="font-size:11px;color:var(--text-3);margin-top:4px">${p.created}</div>
+      </div>`;
+    }).join('');
+  }
+
+  // ── Vendor onboarding items ──
+  if(showVendors && pendingVendorList.length) {
+    if(currentApprovalFilter === 'all') {
+      html += `<div style="padding:6px 14px 4px;font-size:10.5px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.7px;background:var(--surface);border-bottom:1px solid var(--border)">🏢 Vendor Onboarding (${pendingVendorList.length})</div>`;
+    }
+    html += pendingVendorList.map(v => {
+      const isSelected = selectedVendorId === v.id;
+      const msmeTag = (v.msme && v.msme !== 'Not Applicable' && v.msme !== 'N/A')
+        ? `<span style="font-size:10px;font-weight:700;padding:1px 5px;border-radius:4px;background:#f5f3ff;color:#7c3aed">MSME</span>` : '';
+      const intlTag = v.type === 'International'
+        ? `<span style="font-size:10px;font-weight:700;padding:1px 5px;border-radius:4px;background:#fef3c7;color:#92400e">Intl</span>` : '';
+      return `<div onclick="selectApprovalItem('vendor','${v.id}')" style="padding:13px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background 0.1s;background:${isSelected?'#f5f3ff':''}">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+          <div style="flex:1;min-width:0">
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;flex-wrap:wrap">
+              <span style="font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:4px;background:#f5f3ff;color:#7c3aed;flex-shrink:0">Vendor</span>
+              <span style="font-weight:700;font-size:13px;color:${isSelected?'#7c3aed':'var(--text)'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${v.name}</span>
+              ${msmeTag}${intlTag}
+            </div>
+            <div style="font-size:11.5px;color:var(--text-3);margin-top:2px">${v.id} · ${v.type} · ${v.registration}</div>
+          </div>
+          <div style="text-align:right;flex-shrink:0">
+            <span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;background:#fef3c7;color:#92400e">Pending</span>
+            <div style="font-size:11px;color:var(--text-3);margin-top:4px">${v.date}</div>
+          </div>
         </div>
-      </div>
-    </div>
-  `).join('') || '<div style="padding:30px;text-align:center;color:var(--text-3)">No pending approvals</div>';
-  document.getElementById('pending-count-badge').textContent=`${pos.length} pending`;
-  if(selectedPOId) renderApprovalDetail(selectedPOId);
+      </div>`;
+    }).join('');
+  }
+
+  if(!html) {
+    html = '<div style="padding:40px 20px;text-align:center;color:var(--text-3)"><div style="font-size:28px;margin-bottom:8px">🎉</div><div style="font-weight:600">All caught up!</div><div style="font-size:12.5px;margin-top:4px">No pending approvals</div></div>';
+  }
+
+  list.innerHTML = html;
+
+  // Re-render right panel if something is selected
+  if(selectedPOId)     renderApprovalDetail(selectedPOId);
+  if(selectedVendorId) renderVendorApprovalDetail(selectedVendorId);
 }
+
+function selectApprovalItem(type, id) {
+  if(type === 'po') {
+    selectedPOId     = id;
+    selectedVendorId = null;
+    renderApprovals();
+    renderApprovalDetail(id);
+    document.getElementById('approval-panel-title').textContent = '📋 PO Detail — Approval View';
+  } else {
+    selectedVendorId = id;
+    selectedPOId     = null;
+    renderApprovals();
+    renderVendorApprovalDetail(id);
+    document.getElementById('approval-panel-title').textContent = '🏢 Vendor Onboarding — Approval View';
+  }
+}
+
+/* ── Legacy selectPO (used by other parts of app) ── */
 function selectPO(id){
-  selectedPOId=id;
+  currentApprovalFilter = 'po';
+  setApprovalFilter('po', document.getElementById('appr-filter-po'));
+  selectedPOId = id;
   renderApprovals();
   renderApprovalDetail(id);
+  document.getElementById('approval-panel-title').textContent = '📋 PO Detail — Approval View';
+}
+
+/* ── Vendor Approval Detail ── */
+function renderVendorApprovalDetail(id) {
+  const v = db.vendors.find(v => v.id === id);
+  if(!v) return;
+  const panel = document.getElementById('approval-detail-panel');
+
+  const regBadge = v.registration === 'Registered'
+    ? `<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:12px;font-size:12px;font-weight:700;background:#d1fae5;color:#065f46">✅ GST Registered</span>`
+    : `<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:12px;font-size:12px;font-weight:700;background:#fef3c7;color:#92400e">⚠️ Unregistered (RCM)</span>`;
+
+  const msmeBadge = (v.msme && v.msme !== 'Not Applicable' && v.msme !== 'N/A')
+    ? `<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:12px;font-size:12px;font-weight:700;background:#f5f3ff;color:#5b21b6;border:1px solid #c4b5fd">🏅 ${v.msme}</span>`
+    : `<span style="font-size:12.5px;color:var(--text-3)">Not Applicable</span>`;
+
+  const auditEntries = db.auditLog.filter(l => l.entityId === id).slice(0,5);
+
+  panel.innerHTML = `
+    <!-- Header -->
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;gap:8px">
+      <div>
+        <div style="font-size:17px;font-weight:800;letter-spacing:-0.4px;color:var(--text)">${v.name}</div>
+        <div style="color:var(--text-3);font-size:12px;margin-top:3px">${v.id} · Submitted ${v.date}</div>
+      </div>
+      <span style="flex-shrink:0;padding:4px 12px;border-radius:12px;font-size:12px;font-weight:700;background:#fef3c7;color:#92400e;border:1px solid #fde68a">⏳ Pending Approval</span>
+    </div>
+
+    <!-- Key Details Grid -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px">
+      <div style="background:var(--surface);border-radius:8px;padding:10px 12px;border:1px solid var(--border)">
+        <div style="font-size:10.5px;color:var(--text-3);font-weight:700;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:3px">Vendor Type</div>
+        <div style="font-weight:700;font-size:13.5px">${v.type || '—'}</div>
+      </div>
+      <div style="background:var(--surface);border-radius:8px;padding:10px 12px;border:1px solid var(--border)">
+        <div style="font-size:10.5px;color:var(--text-3);font-weight:700;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:3px">Category</div>
+        <div style="font-weight:700;font-size:13.5px">${v.category || '—'}</div>
+      </div>
+      <div style="background:var(--surface);border-radius:8px;padding:10px 12px;border:1px solid var(--border)">
+        <div style="font-size:10.5px;color:var(--text-3);font-weight:700;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:3px">Submitted On</div>
+        <div style="font-weight:700;font-size:13.5px">${v.date}</div>
+      </div>
+    </div>
+
+    <!-- GST & Compliance -->
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:13px 16px;margin-bottom:14px">
+      <div style="font-size:10.5px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px">GST &amp; Compliance</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:12.5px">
+        <div>
+          <div style="color:var(--text-3);font-size:11px;font-weight:600;text-transform:uppercase;margin-bottom:4px">GST Status</div>
+          ${regBadge}
+        </div>
+        <div>
+          <div style="color:var(--text-3);font-size:11px;font-weight:600;text-transform:uppercase;margin-bottom:4px">GSTIN</div>
+          <code style="font-family:'DM Mono',monospace;font-size:12.5px;font-weight:700;color:var(--primary)">${v.gstin && v.gstin !== 'N/A' ? v.gstin : '—'}</code>
+        </div>
+        <div>
+          <div style="color:var(--text-3);font-size:11px;font-weight:600;text-transform:uppercase;margin-bottom:4px">PAN</div>
+          <code style="font-family:'DM Mono',monospace;font-size:12.5px">${v.pan || '—'}</code>
+        </div>
+        <div>
+          <div style="color:var(--text-3);font-size:11px;font-weight:600;text-transform:uppercase;margin-bottom:4px">MSME Status</div>
+          ${msmeBadge}
+        </div>
+        ${v.msme && v.msme !== 'Not Applicable' && v.msme !== 'N/A' ? `
+        <div>
+          <div style="color:var(--text-3);font-size:11px;font-weight:600;text-transform:uppercase;margin-bottom:4px">MSME Type</div>
+          <span style="font-size:12.5px;font-weight:600;color:#5b21b6">${v.msmeType || '—'}</span>
+        </div>
+        <div>
+          <div style="color:var(--text-3);font-size:11px;font-weight:600;text-transform:uppercase;margin-bottom:4px">Udyam Number</div>
+          <code style="font-family:'DM Mono',monospace;font-size:12px;color:#5b21b6">${v.msmeId || '—'}</code>
+        </div>` : ''}
+        ${v.registration === 'Unregistered' ? `
+        <div style="grid-column:1/-1;padding:8px 12px;background:#fffbeb;border:1px solid #fde68a;border-radius:6px;font-size:12px;color:#92400e;margin-top:4px">
+          ⚠️ <b>RCM Applicable</b> — Finance will be notified to self-assess and remit GST liability.
+        </div>` : ''}
+      </div>
+    </div>
+
+    <!-- Sub Vendor Code -->
+    ${v.subVendorCode ? `
+    <div style="background:var(--primary-light);border:1.5px solid var(--primary);border-radius:10px;padding:10px 14px;margin-bottom:14px;display:flex;align-items:center;gap:12px">
+      <span style="font-size:18px">🏷️</span>
+      <div>
+        <div style="font-size:10.5px;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:2px">Sub Vendor Code</div>
+        <code style="font-family:'DM Mono',monospace;font-size:15px;font-weight:800;color:var(--primary);letter-spacing:1.5px">${v.subVendorCode}</code>
+      </div>
+    </div>` : ''}
+
+    <!-- Checklist -->
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:13px 16px;margin-bottom:14px">
+      <div style="font-size:10.5px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px">Approval Checklist</div>
+      ${[
+        ['Legal name &amp; registered address verified', true],
+        [v.registration === 'Registered' ? 'GSTIN validated against GST portal' : 'Unregistered status documented (RCM notice issued)', v.registration === 'Registered' ? !!(v.gstin && v.gstin !== 'N/A') : true],
+        ['PAN captured and verified', !!(v.pan && v.pan !== 'N/A')],
+        ['Bank details on file', true],
+        [v.msme && v.msme !== 'Not Applicable' ? 'MSME Udyam Registration verified' : 'MSME status confirmed as Not Applicable', true],
+        ['Compliance documents uploaded', true],
+      ].map(([label, ok]) => `
+        <div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border);font-size:12.5px">
+          <span style="font-size:14px">${ok ? '✅' : '⚠️'}</span>
+          <span style="${ok ? '' : 'color:#92400e'}">${label}</span>
+        </div>`).join('')}
+    </div>
+
+    <!-- Audit Trail -->
+    ${auditEntries.length ? `
+    <div style="margin-bottom:14px">
+      <div style="font-size:10.5px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">Activity</div>
+      ${auditEntries.map(a => `
+        <div style="display:flex;gap:10px;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px">
+          <span style="color:var(--text-3);white-space:nowrap">${a.ts}</span>
+          <span style="font-weight:600;color:var(--text-2)">${a.event}</span>
+          <span style="color:var(--text-3)">${a.detail}</span>
+        </div>`).join('')}
+    </div>` : ''}
+
+    <!-- Comment box -->
+    <div style="margin-bottom:14px">
+      <label style="font-size:11.5px;font-weight:700;color:var(--text-2);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:6px">Approver Comments <span style="color:var(--danger)">*</span></label>
+      <textarea id="vendor-approval-comment" style="width:100%;min-height:72px;border:1.5px solid var(--border);border-radius:8px;padding:10px 12px;font-family:'DM Sans',sans-serif;font-size:13px;box-sizing:border-box;resize:vertical"
+        placeholder="Add your comments or reason for rejection..."></textarea>
+    </div>
+
+    <!-- Action Buttons -->
+    <div style="display:flex;gap:8px;flex-wrap:wrap;padding-top:4px;border-top:1px solid var(--border)">
+      <button class="btn btn-success" onclick="doVendorAction('${id}','approve')">✅ Approve Vendor</button>
+      <button class="btn btn-warning" onclick="doVendorAction('${id}','sendback')">↩️ Request Info</button>
+      <button class="btn btn-danger"  onclick="doVendorAction('${id}','reject')">❌ Reject</button>
+    </div>
+  `;
+}
+
+/* ── Vendor approval action handler ── */
+function doVendorAction(id, type) {
+  const comment = document.getElementById('vendor-approval-comment')?.value.trim();
+  if(!comment) { toast('Please add a comment before proceeding','error'); return; }
+  const vendor = db.vendors.find(v => v.id === id);
+  if(!vendor) return;
+
+  const statusMap = { approve:'Approved', sendback:'Pending', reject:'Rejected' };
+  const eventMap  = { approve:'Approve', sendback:'Request Info', reject:'Reject' };
+  const msgMap    = { approve:`Vendor ${vendor.name} approved ✅`, sendback:'Sent back for more information', reject:`Vendor ${vendor.name} rejected` };
+
+  vendor.status = statusMap[type];
+  db.auditLog.unshift({
+    ts: new Date().toLocaleString(), event: eventMap[type],
+    entity:'Vendor', entityId: id,
+    actor: document.getElementById('user-name-sidebar')?.textContent || '—',
+    role: currentRole,
+    detail: comment,
+  });
+
+  selectedVendorId = null;
+  renderVendors('','','','');
+  updateVendorKPIs();
+  updateApprovalBadge();
+  toast(msgMap[type], type==='approve'?'success':type==='reject'?'error':'warning');
+  renderApprovals();
+  // Reset right panel
+  document.getElementById('approval-detail-panel').innerHTML = `
+    <div class="empty-state">
+      <div class="icon">${type==='approve'?'✅':'❌'}</div>
+      <h3>${type==='approve'?'Vendor Approved':'Action Completed'}</h3>
+      <p>${msgMap[type]}</p>
+    </div>`;
+  document.getElementById('approval-panel-title').textContent = '📄 Approval Detail';
+}
+
+/* ── Update sidebar approval badge ── */
+function updateApprovalBadge() {
+  const count = db.pos.filter(p => p.status==='In Review').length
+              + db.vendors.filter(v => v.status==='Pending').length;
+  const badge = document.getElementById('approval-badge');
+  if(badge) {
+    badge.textContent = count;
+    badge.style.display = count > 0 ? '' : 'none';
+  }
 }
 function renderApprovalDetail(id){
   const po = db.pos.find(p=>p.id===id);
@@ -6500,6 +6834,7 @@ function confirmAction(){
   closeActionModal();
   selectedPOId=null;
   renderDashboard();
+  updateApprovalBadge();
   toast(msgMap[type],type==='approve'?'success':type==='reject'?'error':'warning');
   renderApprovals();
 }
@@ -9506,6 +9841,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   renderPRs();
   renderPOs();
   renderApprovals();
+  updateApprovalBadge();
   renderLineItems();
   renderAuditLog();
   renderReports();
