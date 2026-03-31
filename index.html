@@ -29,7 +29,7 @@
   --shadow-lg: 0 10px 40px rgba(0,0,0,0.12);
 }
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);display:flex;flex-direction:row;height:100vh;width:100vw;overflow:hidden;font-size:14px;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);display:flex;flex-direction:row;height:100vh;overflow:hidden;font-size:14px;margin:0;padding:0}
 /* SIDEBAR */
 .sidebar{width:220px;min-width:220px;flex-shrink:0;background:var(--sidebar);display:flex;flex-direction:column;height:100vh;overflow-y:auto;overflow-x:hidden;z-index:100;scrollbar-width:none}.sidebar::-webkit-scrollbar{display:none}
 .sidebar-logo{padding:18px 20px 14px;border-bottom:1px solid rgba(255,255,255,0.06)}
@@ -62,12 +62,12 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);dis
 .user-name{color:#e2e8f0;font-size:13px;font-weight:600}
 .user-role{color:#64748b;font-size:11px}
 /* MAIN */
-.main{flex:1;min-width:0;display:flex;flex-direction:column;height:100vh;overflow:hidden}
-.topbar{flex-shrink:0;height:58px;background:var(--card);border-bottom:1.5px solid var(--border);display:flex;align-items:center;padding:0 24px;gap:16px;z-index:50}
+.main{flex:1;min-width:0;min-height:0;display:flex;flex-direction:column;overflow:hidden}
+.topbar{flex-shrink:0;flex-grow:0;height:58px;background:var(--card);border-bottom:1.5px solid var(--border);display:flex;align-items:center;padding:0 24px;gap:16px;z-index:50}
 .topbar-title{font-size:18px;font-weight:700;color:var(--text);letter-spacing:-0.4px}
 .topbar-sub{font-size:13px;color:var(--text-3);margin-left:4px}
 .topbar-actions{margin-left:auto;display:flex;gap:10px;align-items:center}
-.content{flex:1;min-height:0;overflow-y:scroll;overflow-x:hidden;padding:28px 28px 60px 28px;box-sizing:border-box;scrollbar-width:thin;scrollbar-color:#94a3b8 #e8edf2}.content::-webkit-scrollbar{width:8px}.content::-webkit-scrollbar-track{background:#e8edf2}.content::-webkit-scrollbar-thumb{background:#94a3b8;border-radius:4px;min-height:40px}.content::-webkit-scrollbar-thumb:hover{background:#475569}
+.content{flex:1 1 0;overflow-y:auto;overflow-x:hidden;padding:0;box-sizing:border-box;scroll-behavior:auto;scrollbar-width:thin;scrollbar-color:#94a3b8 #e8edf2}.content::-webkit-scrollbar{width:8px}.content::-webkit-scrollbar-track{background:#e8edf2}.content::-webkit-scrollbar-thumb{background:#94a3b8;border-radius:4px;min-height:40px}.content::-webkit-scrollbar-thumb:hover{background:#475569}
 /* BUTTONS */
 .btn{display:inline-flex;align-items:center;gap:7px;padding:8px 16px;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13.5px;font-weight:600;cursor:pointer;border:none;transition:all 0.15s;white-space:nowrap}
 .btn-primary{background:var(--primary);color:#fff}
@@ -174,8 +174,8 @@ textarea{resize:vertical;min-height:80px}
 .search-input input{padding-left:32px;width:240px}
 .search-input::before{content:'🔍';position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:13px;opacity:0.5;pointer-events:none}
 /* PAGES */
-.page{display:none}
-.page.active{display:block;width:100%}
+.page{display:none;margin:0;padding:0}
+.page.active{display:block;width:100%;padding:24px 24px 80px;box-sizing:border-box}.page.active>*:first-child{margin-top:0}
 /* EMPTY STATE */
 .empty-state{text-align:center;padding:60px 20px;color:var(--text-3)}
 .empty-state .icon{font-size:40px;margin-bottom:12px;opacity:0.4}
@@ -203,7 +203,7 @@ textarea{resize:vertical;min-height:80px}
 .exp-ds-name{font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .exp-ds-count{font-size:10.5px;margin-top:2px}
 /* Export Center page: fill viewport height */
-#page-export-center.active{display:flex!important;flex-direction:column;padding:0;height:100%}
+#page-export-center.active{display:flex!important;flex-direction:column;padding:0!important;overflow:hidden}
 
 /* VENDOR INVOICE STEPS */
 .vendor-step{display:flex;flex-direction:column;align-items:center;gap:4px;flex:1}
@@ -510,7 +510,7 @@ textarea{resize:vertical;min-height:80px}
           <table>
             <thead>
               <tr>
-                <th>Vendor ID</th><th>Legal Name</th><th>Type</th>
+                <th>Vendor ID</th><th>Sub Vendor Code</th><th>Legal Name</th><th>Type</th>
                 <th>GST Registration</th><th>GSTIN / Tax ID</th>
                 <th>Category</th><th>Onboarding Status</th><th>Onboarded</th><th>Action</th>
               </tr>
@@ -878,6 +878,459 @@ textarea{resize:vertical;min-height:80px}
               <div id="po-expense-banner" style="display:none;margin-top:12px;padding:10px 14px;border-radius:8px;font-size:12.5px;line-height:1.6;border:1px solid var(--border);background:var(--surface)"></div>
 
             </div>
+          </div>
+        </div>
+
+        <!-- Vendor Code Card -->
+        <div class="card" id="po-vendor-code-card" style="margin-bottom:16px;display:none">
+          <div class="card-header">
+            <div style="display:flex;align-items:center;gap:10px">
+              <span class="card-title">🏢 Vendor Details &amp; Code</span>
+              <span id="po-vendor-status-badge" style="font-size:11.5px;padding:3px 10px;border-radius:12px;font-weight:700;background:#d1fae5;color:#065f46">● Approved</span>
+            </div>
+            <span id="po-vendor-code-id" style="font-family:'DM Mono',monospace;font-size:13px;font-weight:700;color:var(--primary);background:var(--primary-light);padding:4px 12px;border-radius:8px;border:1.5px solid var(--primary)">V-001</span>
+          </div>
+          <div class="card-body">
+
+            <!-- Tabs -->
+            <div style="display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:16px;overflow-x:auto;scrollbar-width:none">
+              <div class="tab active" id="vc-tab-info"      onclick="switchVendorCodeTab('info',this)"      style="white-space:nowrap;flex-shrink:0">📋 Vendor Info</div>
+              <div class="tab"        id="vc-tab-subcode"   onclick="switchVendorCodeTab('subcode',this)"   style="white-space:nowrap;flex-shrink:0">🏷️ Sub Vendor Code</div>
+              <div class="tab"        id="vc-tab-invoicing" onclick="switchVendorCodeTab('invoicing',this)" style="white-space:nowrap;flex-shrink:0">🧾 Invoicing</div>
+              <div class="tab"        id="vc-tab-gst"       onclick="switchVendorCodeTab('gst',this)"       style="white-space:nowrap;flex-shrink:0">📊 GST &amp; Compliance</div>
+              <div class="tab"        id="vc-tab-bank"      onclick="switchVendorCodeTab('bank',this)"      style="white-space:nowrap;flex-shrink:0">🏦 Bank Details</div>
+              <div class="tab"        id="vc-tab-contact"   onclick="switchVendorCodeTab('contact',this)"   style="white-space:nowrap;flex-shrink:0">📞 Contacts</div>
+              <div class="tab"        id="vc-tab-history"   onclick="switchVendorCodeTab('history',this)"   style="white-space:nowrap;flex-shrink:0">📊 PO History</div>
+            </div>
+
+            <!-- Tab: Vendor Info -->
+            <div id="vc-view-info">
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px">
+                <div style="background:var(--surface);border-radius:8px;padding:12px 14px;border:1px solid var(--border)">
+                  <div style="font-size:10.5px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Vendor Name</div>
+                  <div style="font-size:14px;font-weight:700;color:var(--text)" id="vc-name">—</div>
+                </div>
+                <div style="background:var(--surface);border-radius:8px;padding:12px 14px;border:1px solid var(--border)">
+                  <div style="font-size:10.5px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Vendor Code</div>
+                  <div style="font-size:14px;font-weight:700;color:var(--primary);font-family:'DM Mono',monospace" id="vc-code">—</div>
+                </div>
+                <div style="background:var(--surface);border-radius:8px;padding:12px 14px;border:1px solid var(--border)">
+                  <div style="font-size:10.5px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Vendor Type</div>
+                  <div style="font-size:14px;font-weight:700;color:var(--text)" id="vc-type">—</div>
+                </div>
+                <div style="background:var(--surface);border-radius:8px;padding:12px 14px;border:1px solid var(--border)">
+                  <div style="font-size:10.5px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Category</div>
+                  <div style="font-size:14px;font-weight:700;color:var(--text)" id="vc-category">—</div>
+                </div>
+                <div style="background:var(--surface);border-radius:8px;padding:12px 14px;border:1px solid var(--border)">
+                  <div style="font-size:10.5px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Onboarded On</div>
+                  <div style="font-size:14px;font-weight:700;color:var(--text)" id="vc-date">—</div>
+                </div>
+                <div style="background:var(--surface);border-radius:8px;padding:12px 14px;border:1px solid var(--border)">
+                  <div style="font-size:10.5px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Registration</div>
+                  <div style="font-size:14px;font-weight:700;color:var(--text)" id="vc-registration">—</div>
+                </div>
+                <div style="background:var(--surface);border-radius:8px;padding:12px 14px;border:1px solid var(--border);grid-column:1/-1">
+                  <div style="font-size:10.5px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Registered Address</div>
+                  <div style="font-size:13.5px;font-weight:600;color:var(--text)" id="vc-address">—</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Tab: Sub Vendor Code -->
+            <div id="vc-view-subcode" style="display:none">
+
+              <!-- Code display hero -->
+              <div style="display:flex;align-items:center;gap:16px;padding:18px 20px;background:linear-gradient(135deg,var(--primary-light) 0%,#e0e7ff 100%);border:1.5px solid var(--primary);border-radius:12px;margin-bottom:16px">
+                <div style="width:48px;height:48px;border-radius:12px;background:var(--primary);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">🏷️</div>
+                <div style="flex:1">
+                  <div style="font-size:11px;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:4px">Sub Vendor Code</div>
+                  <div id="vc-subcode-display" style="font-family:'DM Mono',monospace;font-size:22px;font-weight:800;color:var(--primary);letter-spacing:2px">—</div>
+                </div>
+                <button id="vc-subcode-copy-btn" onclick="copyVCSubCode()" class="btn btn-secondary btn-sm" title="Copy code" style="flex-shrink:0">📋 Copy</button>
+              </div>
+
+              <!-- Code details grid -->
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:16px">
+                <div style="background:var(--surface);border-radius:8px;padding:12px 14px;border:1px solid var(--border)">
+                  <div style="font-size:10.5px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">System Vendor ID</div>
+                  <div style="font-size:14px;font-weight:700;color:var(--primary);font-family:'DM Mono',monospace" id="vc-subcode-sysid">—</div>
+                </div>
+                <div style="background:var(--surface);border-radius:8px;padding:12px 14px;border:1px solid var(--border)">
+                  <div style="font-size:10.5px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Code Type</div>
+                  <div style="font-size:14px;font-weight:700;color:var(--text)" id="vc-subcode-type">Auto Generated</div>
+                </div>
+                <div style="background:var(--surface);border-radius:8px;padding:12px 14px;border:1px solid var(--border)">
+                  <div style="font-size:10.5px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Assigned On</div>
+                  <div style="font-size:14px;font-weight:700;color:var(--text)" id="vc-subcode-date">—</div>
+                </div>
+                <div style="background:var(--surface);border-radius:8px;padding:12px 14px;border:1px solid var(--border)">
+                  <div style="font-size:10.5px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Vendor Name</div>
+                  <div style="font-size:14px;font-weight:700;color:var(--text)" id="vc-subcode-vendor">—</div>
+                </div>
+              </div>
+
+              <!-- Manual override -->
+              <div style="background:var(--surface);border-radius:10px;border:1px solid var(--border);padding:14px 16px">
+                <div style="font-size:12px;font-weight:700;color:var(--text-2);margin-bottom:10px;display:flex;align-items:center;gap:6px">
+                  ✏️ Override Sub Vendor Code <span style="font-size:11px;color:var(--text-3);font-weight:400">(optional — updates vendor master)</span>
+                </div>
+                <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
+                  <div class="form-group" style="flex:1;min-width:200px;margin-bottom:0">
+                    <input type="text" id="vc-subcode-override-input"
+                      placeholder="e.g. SVC-TECH-042"
+                      oninput="this.value=this.value.toUpperCase()"
+                      style="font-family:'DM Mono',monospace;font-weight:600;letter-spacing:0.5px"/>
+                    <span class="form-hint">Uppercase alphanumeric and hyphens — max 20 chars</span>
+                  </div>
+                  <div class="form-group" style="flex:0 0 180px;margin-bottom:0">
+                    <input type="text" id="vc-subcode-override-reason"
+                      placeholder="Reason for override"/>
+                    <span class="form-hint">e.g. SAP migration</span>
+                  </div>
+                  <button class="btn btn-primary btn-sm" onclick="applyVCSubCodeOverride()" style="align-self:flex-start;margin-top:4px">✔ Apply</button>
+                </div>
+                <div id="vc-subcode-override-status" style="display:none;margin-top:10px;padding:8px 12px;border-radius:6px;font-size:12.5px;font-weight:600"></div>
+              </div>
+            </div>
+
+            <!-- Tab: GST & Compliance -->
+            <div id="vc-view-gst" style="display:none">
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-bottom:14px">
+                <div style="background:var(--surface);border-radius:8px;padding:12px 14px;border:1px solid var(--border)">
+                  <div style="font-size:10.5px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">GSTIN</div>
+                  <div style="font-size:14px;font-weight:700;color:var(--primary);font-family:'DM Mono',monospace" id="vc-gstin">—</div>
+                </div>
+                <div style="background:var(--surface);border-radius:8px;padding:12px 14px;border:1px solid var(--border)">
+                  <div style="font-size:10.5px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">PAN</div>
+                  <div style="font-size:14px;font-weight:700;color:var(--text);font-family:'DM Mono',monospace" id="vc-pan">—</div>
+                </div>
+                <div style="background:var(--surface);border-radius:8px;padding:12px 14px;border:1px solid var(--border)">
+                  <div style="font-size:10.5px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">GST Registration</div>
+                  <div style="font-size:14px;font-weight:700" id="vc-gst-status">—</div>
+                </div>
+                <div style="background:var(--surface);border-radius:8px;padding:12px 14px;border:1px solid var(--border)">
+                  <div style="font-size:10.5px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">GST Filing Status</div>
+                  <div style="font-size:14px;font-weight:700;color:var(--success)">✅ Returns Filed</div>
+                </div>
+                <div style="background:var(--surface);border-radius:8px;padding:12px 14px;border:1px solid var(--border)">
+                  <div style="font-size:10.5px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">TDS Category</div>
+                  <div style="font-size:14px;font-weight:700;color:var(--text)" id="vc-tds">194C — Contractors</div>
+                </div>
+                <div style="background:var(--surface);border-radius:8px;padding:12px 14px;border:1px solid var(--border)">
+                  <div style="font-size:10.5px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">MSME Registered</div>
+                  <div style="font-size:14px;font-weight:700;color:var(--text)" id="vc-msme">No</div>
+                </div>
+              </div>
+              <div id="vc-gst-warning" style="display:none;padding:10px 14px;background:#fef3c7;border:1px solid #fde68a;border-radius:8px;font-size:12.5px;color:#92400e">
+                ⚠️ <b>Unregistered Vendor:</b> GST reverse charge mechanism may apply. Verify before processing.
+              </div>
+              <div id="vc-gst-ok" style="padding:10px 14px;background:#f0fdf4;border:1px solid #86efac;border-radius:8px;font-size:12.5px;color:#166534">
+                ✅ <b>GST Verified:</b> Vendor GSTIN is active and returns are filed. ITC claim is applicable.
+              </div>
+            </div>
+
+            <!-- Tab: Bank Details -->
+            <div id="vc-view-bank" style="display:none">
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:14px">
+                <div style="background:var(--surface);border-radius:8px;padding:12px 14px;border:1px solid var(--border)">
+                  <div style="font-size:10.5px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Bank Name</div>
+                  <div style="font-size:14px;font-weight:700;color:var(--text)" id="vc-bank-name">—</div>
+                </div>
+                <div style="background:var(--surface);border-radius:8px;padding:12px 14px;border:1px solid var(--border)">
+                  <div style="font-size:10.5px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Account Number</div>
+                  <div style="font-size:14px;font-weight:700;color:var(--text);font-family:'DM Mono',monospace" id="vc-bank-acc">—</div>
+                </div>
+                <div style="background:var(--surface);border-radius:8px;padding:12px 14px;border:1px solid var(--border)">
+                  <div style="font-size:10.5px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">IFSC Code</div>
+                  <div style="font-size:14px;font-weight:700;color:var(--primary);font-family:'DM Mono',monospace" id="vc-bank-ifsc">—</div>
+                </div>
+                <div style="background:var(--surface);border-radius:8px;padding:12px 14px;border:1px solid var(--border)">
+                  <div style="font-size:10.5px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Account Type</div>
+                  <div style="font-size:14px;font-weight:700;color:var(--text)">Current Account</div>
+                </div>
+                <div style="background:var(--surface);border-radius:8px;padding:12px 14px;border:1px solid var(--border)">
+                  <div style="font-size:10.5px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Payment Mode</div>
+                  <div style="font-size:14px;font-weight:700;color:var(--text)">NEFT / RTGS</div>
+                </div>
+                <div style="background:var(--surface);border-radius:8px;padding:12px 14px;border:1px solid var(--border)">
+                  <div style="font-size:10.5px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Bank Verification</div>
+                  <div style="font-size:14px;font-weight:700;color:var(--success)">✅ Verified</div>
+                </div>
+              </div>
+              <div style="padding:10px 14px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;font-size:12.5px;color:#1e40af">
+                🔒 <b>Secure:</b> Bank details are masked for security. Full details visible to Finance team only.
+              </div>
+            </div>
+
+            <!-- Tab: Contacts -->
+            <div id="vc-view-contact" style="display:none">
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px">
+                <div style="background:var(--surface);border-radius:10px;padding:14px 16px;border:1px solid var(--border)">
+                  <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+                    <div style="width:36px;height:36px;border-radius:50%;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px" id="vc-primary-avatar">—</div>
+                    <div>
+                      <div style="font-size:13.5px;font-weight:700;color:var(--text)" id="vc-primary-name">—</div>
+                      <div style="font-size:11.5px;color:var(--text-3)">Primary Contact</div>
+                    </div>
+                  </div>
+                  <div style="font-size:12.5px;color:var(--text-2);margin-bottom:4px">📧 <span id="vc-primary-email">—</span></div>
+                  <div style="font-size:12.5px;color:var(--text-2)">📞 <span id="vc-primary-phone">—</span></div>
+                </div>
+                <div style="background:var(--surface);border-radius:10px;padding:14px 16px;border:1px solid var(--border)">
+                  <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+                    <div style="width:36px;height:36px;border-radius:50%;background:#f59e0b;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px">AP</div>
+                    <div>
+                      <div style="font-size:13.5px;font-weight:700;color:var(--text)">Accounts Payable</div>
+                      <div style="font-size:11.5px;color:var(--text-3)">Finance Contact</div>
+                    </div>
+                  </div>
+                  <div style="font-size:12.5px;color:var(--text-2);margin-bottom:4px">📧 <span id="vc-ap-email">—</span></div>
+                  <div style="font-size:12.5px;color:var(--text-2)">📞 <span id="vc-ap-phone">—</span></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Tab: PO History -->
+            <div id="vc-view-history" style="display:none">
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:14px">
+                <div style="background:#eff6ff;border-radius:8px;padding:12px;text-align:center;border:1px solid #bfdbfe">
+                  <div style="font-size:22px;font-weight:800;color:var(--primary)" id="vc-hist-total">—</div>
+                  <div style="font-size:11px;font-weight:600;color:#1e40af;text-transform:uppercase;margin-top:2px">Total POs</div>
+                </div>
+                <div style="background:#f0fdf4;border-radius:8px;padding:12px;text-align:center;border:1px solid #86efac">
+                  <div style="font-size:22px;font-weight:800;color:var(--success)" id="vc-hist-approved">—</div>
+                  <div style="font-size:11px;font-weight:600;color:#065f46;text-transform:uppercase;margin-top:2px">Approved</div>
+                </div>
+                <div style="background:#fffbeb;border-radius:8px;padding:12px;text-align:center;border:1px solid #fde68a">
+                  <div style="font-size:22px;font-weight:800;color:var(--warning)" id="vc-hist-pending">—</div>
+                  <div style="font-size:11px;font-weight:600;color:#92400e;text-transform:uppercase;margin-top:2px">In Review</div>
+                </div>
+                <div style="background:var(--surface);border-radius:8px;padding:12px;text-align:center;border:1px solid var(--border)">
+                  <div style="font-size:22px;font-weight:800;color:var(--text)" id="vc-hist-value">—</div>
+                  <div style="font-size:11px;font-weight:600;color:var(--text-3);text-transform:uppercase;margin-top:2px">Total Value</div>
+                </div>
+              </div>
+              <div class="table-wrap">
+                <table style="width:100%;border-collapse:collapse">
+                  <thead>
+                    <tr style="background:var(--surface)">
+                      <th style="padding:8px 12px;text-align:left;font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;border-bottom:2px solid var(--border)">PO No.</th>
+                      <th style="padding:8px 12px;text-align:left;font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;border-bottom:2px solid var(--border)">Title</th>
+                      <th style="padding:8px 12px;text-align:left;font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;border-bottom:2px solid var(--border)">Date</th>
+                      <th style="padding:8px 12px;text-align:right;font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;border-bottom:2px solid var(--border)">Value</th>
+                      <th style="padding:8px 12px;text-align:left;font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;border-bottom:2px solid var(--border)">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody id="vc-hist-table"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- ═══ Tab: Invoicing ═══ -->
+            <div id="vc-view-invoicing" style="display:none">
+
+              <!-- Frequency selector cards -->
+              <div style="margin-bottom:18px">
+                <div style="font-size:11.5px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.7px;margin-bottom:10px">Invoicing Frequency <span class="req">*</span></div>
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px">
+                  <div id="ifc-monthly"   onclick="selectInvoicingFreq('monthly')"
+                    style="padding:14px 10px;border:2px solid var(--border);border-radius:10px;cursor:pointer;transition:all 0.15s;text-align:center;background:var(--surface)">
+                    <div style="font-size:24px;margin-bottom:6px">📅</div>
+                    <div style="font-size:13px;font-weight:700;color:var(--text)">Monthly</div>
+                    <div style="font-size:11px;color:var(--text-3);margin-top:3px">Every calendar month</div>
+                  </div>
+                  <div id="ifc-quarterly" onclick="selectInvoicingFreq('quarterly')"
+                    style="padding:14px 10px;border:2px solid var(--border);border-radius:10px;cursor:pointer;transition:all 0.15s;text-align:center;background:var(--surface)">
+                    <div style="font-size:24px;margin-bottom:6px">🗓️</div>
+                    <div style="font-size:13px;font-weight:700;color:var(--text)">Quarterly</div>
+                    <div style="font-size:11px;color:var(--text-3);margin-top:3px">Every 3 months</div>
+                  </div>
+                  <div id="ifc-yearly"    onclick="selectInvoicingFreq('yearly')"
+                    style="padding:14px 10px;border:2px solid var(--border);border-radius:10px;cursor:pointer;transition:all 0.15s;text-align:center;background:var(--surface)">
+                    <div style="font-size:24px;margin-bottom:6px">📆</div>
+                    <div style="font-size:13px;font-weight:700;color:var(--text)">Yearly</div>
+                    <div style="font-size:11px;color:var(--text-3);margin-top:3px">Annual invoice</div>
+                  </div>
+                  <div id="ifc-milestone" onclick="selectInvoicingFreq('milestone')"
+                    style="padding:14px 10px;border:2px solid var(--border);border-radius:10px;cursor:pointer;transition:all 0.15s;text-align:center;background:var(--surface)">
+                    <div style="font-size:24px;margin-bottom:6px">🏁</div>
+                    <div style="font-size:13px;font-weight:700;color:var(--text)">Milestone</div>
+                    <div style="font-size:11px;color:var(--text-3);margin-top:3px">On delivery / stage</div>
+                  </div>
+                  <div id="ifc-other"     onclick="selectInvoicingFreq('other')"
+                    style="padding:14px 10px;border:2px solid var(--border);border-radius:10px;cursor:pointer;transition:all 0.15s;text-align:center;background:var(--surface)">
+                    <div style="font-size:24px;margin-bottom:6px">⚙️</div>
+                    <div style="font-size:13px;font-weight:700;color:var(--text)">Other</div>
+                    <div style="font-size:11px;color:var(--text-3);margin-top:3px">Custom schedule</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Monthly settings -->
+              <div id="inv-detail-monthly" style="display:none">
+                <div class="section-label" style="margin-top:0">Monthly Settings</div>
+                <div class="form-grid">
+                  <div class="form-group">
+                    <label>Invoice Raise Day</label>
+                    <select id="inv-monthly-day">
+                      <option value="1">1st of every month</option>
+                      <option value="5">5th of every month</option>
+                      <option value="10">10th of every month</option>
+                      <option value="15">15th of every month</option>
+                      <option value="last">Last day of month</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label>Payment Due</label>
+                    <select id="inv-monthly-due">
+                      <option>15 days after invoice</option><option>30 days after invoice</option>
+                      <option>45 days after invoice</option><option>60 days after invoice</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label>Start Month</label>
+                    <input type="month" id="inv-monthly-start" value="2026-04"/>
+                  </div>
+                  <div class="form-group">
+                    <label>Auto-Reminder</label>
+                    <select id="inv-monthly-reminder">
+                      <option>3 days before due</option>
+                      <option>7 days before due</option>
+                      <option>No reminder</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Quarterly settings -->
+              <div id="inv-detail-quarterly" style="display:none">
+                <div class="section-label" style="margin-top:0">Quarterly Settings</div>
+                <div class="form-grid">
+                  <div class="form-group">
+                    <label>Quarter Start Month</label>
+                    <select id="inv-quarterly-start">
+                      <option value="apr">April (Q1 — Apr–Jun)</option>
+                      <option value="jan">January (Q1 — Jan–Mar)</option>
+                      <option value="jul">July (Q1 — Jul–Sep)</option>
+                      <option value="oct">October (Q1 — Oct–Dec)</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label>Invoice Raised</label>
+                    <select id="inv-quarterly-timing">
+                      <option>Start of quarter</option>
+                      <option>End of quarter</option>
+                      <option>15 days after quarter end</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label>Payment Terms</label>
+                    <select id="inv-quarterly-due">
+                      <option>Net 30</option><option>Net 45</option><option>Net 60</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label>Applicable from FY</label>
+                    <select id="inv-quarterly-fy">
+                      <option>FY 2025–26</option><option>FY 2026–27</option><option>FY 2027–28</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Yearly settings -->
+              <div id="inv-detail-yearly" style="display:none">
+                <div class="section-label" style="margin-top:0">Yearly Settings</div>
+                <div class="form-grid">
+                  <div class="form-group">
+                    <label>Annual Invoice Date</label>
+                    <input type="date" id="inv-yearly-date" value="2026-04-01"/>
+                  </div>
+                  <div class="form-group">
+                    <label>Advance / Arrears</label>
+                    <select id="inv-yearly-mode">
+                      <option>In Advance (start of year)</option>
+                      <option>In Arrears (end of year)</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label>Payment Terms</label>
+                    <select id="inv-yearly-due">
+                      <option>Net 30</option><option>Net 45</option><option>Net 60</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label>Invoice Type</label>
+                    <select id="inv-yearly-type">
+                      <option>Regular Annual Invoice</option>
+                      <option>AMC (Annual Maintenance Contract)</option>
+                      <option>Retainer Agreement</option>
+                      <option>License / Subscription Renewal</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Milestone settings -->
+              <div id="inv-detail-milestone" style="display:none">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+                  <div class="section-label" style="margin:0">Milestone Schedule</div>
+                  <button class="btn btn-secondary btn-sm" onclick="addInvMilestone()">+ Add Milestone</button>
+                </div>
+                <div id="inv-milestone-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px"></div>
+                <div style="padding:10px 14px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;font-size:12px;color:#1e40af">
+                  💡 Each milestone triggers a separate invoice. Total of all milestone amounts should equal the PO value.
+                </div>
+              </div>
+
+              <!-- Other / Custom -->
+              <div id="inv-detail-other" style="display:none">
+                <div class="section-label" style="margin-top:0">Custom Invoicing Schedule</div>
+                <div class="form-grid">
+                  <div class="form-group form-full">
+                    <label>Frequency Description</label>
+                    <input type="text" id="inv-other-desc" placeholder="e.g. Bi-monthly on 1st and 15th, or On completion of each sprint"/>
+                  </div>
+                  <div class="form-group">
+                    <label>Approx. Frequency</label>
+                    <select id="inv-other-freq">
+                      <option>Weekly</option><option>Bi-weekly</option><option>Bi-monthly</option>
+                      <option>On Delivery</option><option>On Acceptance</option>
+                      <option>As per SOW</option><option>Ad hoc</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label>Payment Terms</label>
+                    <select id="inv-other-due">
+                      <option>Net 15</option><option>Net 30</option>
+                      <option>Net 45</option><option>Net 60</option><option>Immediate</option>
+                    </select>
+                  </div>
+                  <div class="form-group form-full">
+                    <label>Additional Notes</label>
+                    <textarea id="inv-other-notes" style="min-height:60px" placeholder="Special invoicing conditions, partial payments, advance requirements..."></textarea>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Save bar -->
+              <div id="inv-summary-bar" style="display:none;margin-top:14px;padding:12px 16px;background:var(--surface);border:1.5px solid var(--border);border-radius:10px">
+                <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+                  <div>
+                    <div style="font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Selected Schedule</div>
+                    <div style="display:flex;align-items:center;gap:8px">
+                      <span id="inv-summary-icon" style="font-size:20px">📅</span>
+                      <span id="inv-summary-label" style="font-size:14px;font-weight:700;color:var(--primary)">—</span>
+                    </div>
+                  </div>
+                  <button class="btn btn-primary btn-sm" onclick="saveInvoicingSettings()">✔ Save Invoicing Settings</button>
+                </div>
+                <div id="inv-save-status" style="display:none;margin-top:8px;font-size:12.5px;font-weight:600;color:var(--success)"></div>
+              </div>
+
+            </div>
+
           </div>
         </div>
 
@@ -1276,7 +1729,7 @@ textarea{resize:vertical;min-height:80px}
     </div>
 
     <!-- EXPORT CENTER PAGE -->
-    <div class="page" id="page-export-center" style="padding:0;overflow:hidden;display:none">
+    <div class="page" id="page-export-center">
       <div style="display:flex;height:100%;overflow:hidden">
 
         <!-- ═══ LEFT PANEL — Dataset picker (fixed, scrollable) ═══ -->
@@ -1693,7 +2146,7 @@ textarea{resize:vertical;min-height:80px}
         <!-- ═══════════════════════════════════════════════════════════ -->
         <!--  VIEW 1: BULK UPLOAD & OCR                                 -->
         <!-- ═══════════════════════════════════════════════════════════ -->
-        <div id="inv-view-upload" style="padding-bottom:40px">
+        <div id="inv-view-upload">
 
           <!-- PO / Non-PO type selector -->
           <div style="display:flex;gap:12px;margin-bottom:16px">
@@ -1890,7 +2343,7 @@ textarea{resize:vertical;min-height:80px}
         <!-- ═══════════════════════════════════════════════════════════ -->
         <!--  VIEW 2: VENDOR INVOICE SUBMISSION                         -->
         <!-- ═══════════════════════════════════════════════════════════ -->
-        <div id="inv-view-vendor" style="display:none;padding-bottom:60px">
+        <div id="inv-view-vendor" style="display:none">
 
           <!-- Header -->
           <div style="background:linear-gradient(135deg,#0f172a 0%,#1e3a5f 100%);border-radius:12px;padding:16px 20px;margin-bottom:16px;color:#fff;display:flex;align-items:center;gap:14px">
@@ -2236,7 +2689,7 @@ textarea{resize:vertical;min-height:80px}
         <!-- ═══════════════════════════════════════════════════════════ -->
         <!--  VIEW 3: INVOICE REGISTER                                  -->
         <!-- ═══════════════════════════════════════════════════════════ -->
-        <div id="inv-view-register" style="display:none;padding-bottom:40px">
+        <div id="inv-view-register" style="display:none">
           <div class="filter-bar">
             <div class="search-input"><input type="text" placeholder="Search invoices..." oninput="filterInvoiceRegister(this.value)"/></div>
             <select style="width:160px" onchange="filterInvoiceRegister('',this.value)">
@@ -2269,7 +2722,7 @@ textarea{resize:vertical;min-height:80px}
         <!-- ═══════════════════════════════════════════════════════════ -->
         <!--  VIEW 4: CREDIT NOTES                                      -->
         <!-- ═══════════════════════════════════════════════════════════ -->
-        <div id="inv-view-cn" style="display:none;padding-bottom:40px">
+        <div id="inv-view-cn" style="display:none">
 
           <!-- Credit Note KPIs -->
           <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:18px">
@@ -2346,7 +2799,7 @@ textarea{resize:vertical;min-height:80px}
         <!-- ═══════════════════════════════════════════════════════════ -->
         <!--  VIEW 5: DEBIT NOTES                                       -->
         <!-- ═══════════════════════════════════════════════════════════ -->
-        <div id="inv-view-dn" style="display:none;padding-bottom:40px">
+        <div id="inv-view-dn" style="display:none">
 
           <!-- Debit Note KPIs -->
           <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:18px">
@@ -2835,6 +3288,129 @@ textarea{resize:vertical;min-height:80px}
         <span class="form-hint" id="v-doc-hint">Upload required compliance documents</span>
       </div>
 
+      <!-- ── Sub Vendor Code ── -->
+      <div class="section-label" style="margin-top:4px">Sub Vendor Code</div>
+      <div style="background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:16px 18px;margin-bottom:14px">
+
+        <!-- Mode toggle tabs -->
+        <div style="display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:16px;overflow-x:auto;scrollbar-width:none">
+          <div id="svc-tab-auto" onclick="switchSVCTab('auto')"
+            style="padding:8px 16px;font-size:13px;font-weight:600;color:var(--primary);border-bottom:2.5px solid var(--primary);margin-bottom:-2px;cursor:pointer;white-space:nowrap;flex-shrink:0;user-select:none">
+            🔄 Auto Generate
+          </div>
+          <div id="svc-tab-manual" onclick="switchSVCTab('manual')"
+            style="padding:8px 16px;font-size:13px;font-weight:600;color:var(--text-3);border-bottom:2.5px solid transparent;margin-bottom:-2px;cursor:pointer;white-space:nowrap;flex-shrink:0;user-select:none">
+            ✏️ Manual Entry
+          </div>
+          <div id="svc-tab-prefix" onclick="switchSVCTab('prefix')"
+            style="padding:8px 16px;font-size:13px;font-weight:600;color:var(--text-3);border-bottom:2.5px solid transparent;margin-bottom:-2px;cursor:pointer;white-space:nowrap;flex-shrink:0;user-select:none">
+            🏷️ Prefix + Sequence
+          </div>
+        </div>
+
+        <!-- AUTO GENERATE panel -->
+        <div id="svc-panel-auto">
+          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+            <div style="flex:1;min-width:180px">
+              <label style="font-size:11.5px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:5px">Generated Code</label>
+              <div style="display:flex;align-items:center;gap:8px">
+                <input type="text" id="svc-auto-preview" readonly
+                  style="flex:1;font-family:'DM Mono',monospace;font-size:14px;font-weight:700;color:var(--primary);background:var(--primary-light);border:1.5px solid var(--primary);border-radius:8px;padding:9px 12px;letter-spacing:1px"
+                  value="SVC-001"/>
+                <button onclick="regenerateSVC()" class="btn btn-secondary btn-sm" title="Regenerate code">🔄</button>
+                <button onclick="copySVC()" class="btn btn-secondary btn-sm" title="Copy code">📋</button>
+              </div>
+            </div>
+            <div style="min-width:160px">
+              <label style="font-size:11.5px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:5px">Format</label>
+              <select id="svc-format" onchange="regenerateSVC()" style="font-size:13px;padding:9px 10px;border:1.5px solid var(--border);border-radius:8px;width:100%">
+                <option value="SVC-NNN">SVC-001 (default)</option>
+                <option value="V-NNN">V-001</option>
+                <option value="VND-NNN">VND-001</option>
+                <option value="FYND-NNN">FYND-001</option>
+                <option value="SUB-NNN">SUB-001</option>
+              </select>
+            </div>
+          </div>
+          <div style="margin-top:10px;font-size:12px;color:var(--text-3);display:flex;align-items:center;gap:6px">
+            <span style="color:var(--success)">●</span> Code is auto-assigned at the time of submission and stored in the vendor master
+          </div>
+        </div>
+
+        <!-- MANUAL ENTRY panel -->
+        <div id="svc-panel-manual" style="display:none">
+          <div class="form-grid" style="margin-bottom:0">
+            <div class="form-group">
+              <label>Sub Vendor Code <span class="req">*</span></label>
+              <input type="text" id="svc-manual-input"
+                placeholder="e.g. SVC-TECH-042"
+                oninput="this.value=this.value.toUpperCase();validateSVCManual(this)"
+                style="font-family:'DM Mono',monospace;font-weight:600;letter-spacing:0.5px"/>
+              <span class="form-hint" id="svc-manual-hint">Alphanumeric, hyphens allowed — max 20 chars</span>
+            </div>
+            <div class="form-group">
+              <label>Code Category</label>
+              <select id="svc-manual-category" style="font-size:13px">
+                <option value="">— Optional —</option>
+                <option value="IT">IT &amp; Technology</option>
+                <option value="MFG">Manufacturing</option>
+                <option value="LOG">Logistics</option>
+                <option value="SVC">Services</option>
+                <option value="RAW">Raw Materials</option>
+                <option value="MRO">MRO / Maintenance</option>
+                <option value="CONS">Consulting</option>
+              </select>
+            </div>
+            <div class="form-group form-full">
+              <label>Reason for Manual Code</label>
+              <input type="text" id="svc-manual-reason"
+                placeholder="e.g. Legacy ERP migration — code must match SAP vendor master"/>
+            </div>
+          </div>
+          <div id="svc-manual-error" style="display:none;margin-top:8px;padding:8px 12px;background:#fee2e2;border:1px solid #fecaca;border-radius:6px;font-size:12.5px;color:#dc2626"></div>
+        </div>
+
+        <!-- PREFIX + SEQUENCE panel -->
+        <div id="svc-panel-prefix" style="display:none">
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+            <div class="form-group" style="flex:0 0 140px;margin-bottom:0">
+              <label style="font-size:11.5px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:5px">Prefix</label>
+              <input type="text" id="svc-prefix-input" value="SVC"
+                placeholder="e.g. SVC" maxlength="8"
+                oninput="this.value=this.value.toUpperCase().replace(/[^A-Z0-9]/g,'');updateSVCPreview()"
+                style="font-family:'DM Mono',monospace;font-weight:700;font-size:14px;text-align:center"/>
+            </div>
+            <div style="font-size:22px;color:var(--text-3);padding-bottom:8px;font-weight:300">-</div>
+            <div class="form-group" style="flex:0 0 100px;margin-bottom:0">
+              <label style="font-size:11.5px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:5px">Sequence No.</label>
+              <input type="number" id="svc-seq-input" value="1" min="1" max="9999"
+                oninput="updateSVCPreview()"
+                style="font-family:'DM Mono',monospace;font-weight:600;font-size:14px;text-align:center"/>
+            </div>
+            <div class="form-group" style="flex:0 0 120px;margin-bottom:0">
+              <label style="font-size:11.5px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:5px">Padding</label>
+              <select id="svc-padding" onchange="updateSVCPreview()" style="font-size:13px">
+                <option value="3">3 digits (001)</option>
+                <option value="4">4 digits (0001)</option>
+                <option value="5">5 digits (00001)</option>
+                <option value="0">No padding</option>
+              </select>
+            </div>
+            <div class="form-group" style="flex:1;min-width:140px;margin-bottom:0">
+              <label style="font-size:11.5px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:5px">Preview</label>
+              <div style="display:flex;align-items:center;gap:6px">
+                <input type="text" id="svc-prefix-preview" readonly
+                  style="font-family:'DM Mono',monospace;font-size:14px;font-weight:700;color:var(--primary);background:var(--primary-light);border:1.5px solid var(--primary);border-radius:8px;padding:8px 12px;flex:1"/>
+                <button onclick="copySVCPrefix()" class="btn btn-secondary btn-sm" title="Copy">📋</button>
+              </div>
+            </div>
+          </div>
+          <div style="margin-top:10px;font-size:12px;color:var(--text-3)">
+            💡 Sequence auto-increments for each new vendor — you can override the starting number above
+          </div>
+        </div>
+      </div>
+
     </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeVendorModal()">Cancel</button>
@@ -2842,8 +3418,6 @@ textarea{resize:vertical;min-height:80px}
     </div>
   </div>
 </div>
-
-<!-- APPROVAL ACTION MODAL -->
 <div class="modal-overlay" id="action-modal" style="display:none" onclick="closeActionModal(event)">
   <div class="modal" style="max-width:420px">
     <div class="modal-header">
@@ -3241,6 +3815,8 @@ function toggleInvoicesNav() {
 }
 
 function navigateInvoices(view) {
+  lockScrollTop();
+  
   // Open subnav if closed
   if(!invoicesNavOpen) toggleInvoicesNav();
 
@@ -3276,10 +3852,7 @@ function navigateInvoices(view) {
   setTimeout(() => {
     const tabEl = document.getElementById('inv-tab-' + view);
     switchInvoiceView(view, tabEl);
-    // Reset scroll after view renders
-    const content = document.querySelector('.content');
-    if(content) content.scrollTop = 0;
-    requestAnimationFrame(() => { if(content) content.scrollTop = 0; });
+    lockScrollTop();
   }, 50);
 }
 
@@ -3302,6 +3875,8 @@ function toggleFinanceNav() {
 }
 
 function navigateFinance(tab) {
+  lockScrollTop();
+
   // Open subnav if not already open
   if (!financeNavOpen) toggleFinanceNav();
 
@@ -3326,10 +3901,7 @@ function navigateFinance(tab) {
   renderFinance();
   const tabEl = document.querySelector(`#finance-tabs .tab[onclick="switchFinanceTab('${tab}',this)"]`);
   if (tabEl) switchFinanceTab(tab, tabEl);
-  // Reset scroll AFTER render — use rAF to ensure layout is settled
-  const content = document.querySelector('.content');
-  if(content) content.scrollTop = 0;
-  requestAnimationFrame(() => { if(content) content.scrollTop = 0; });
+  lockScrollTop();
 }
 
 function navigate(page) {
@@ -3342,6 +3914,7 @@ function navigate(page) {
       return;
     }
   }
+  lockScrollTop();
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   document.querySelectorAll('.nav-subitem').forEach(n=>n.classList.remove('active'));
@@ -3366,10 +3939,16 @@ function navigate(page) {
   if(page==='export-center') initExportCenter();
   if(page==='audit-log') renderAuditLog();
   if(page==='create-po') initCreatePO();
-  // Reset scroll AFTER rendering — double-fire to handle async layout
-  const content = document.querySelector('.content');
-  if(content) content.scrollTop = 0;
-  requestAnimationFrame(() => { if(content) content.scrollTop = 0; });
+  lockScrollTop();
+}
+
+
+// Universal scroll-to-top lock — fires immediately + after paint on every nav
+function lockScrollTop() {
+  const c = document.querySelector('.content');
+  if(!c) return;
+  c.scrollTop = 0;
+  requestAnimationFrame(() => { c.scrollTop = 0; });
 }
 
 // ===== TOAST =====
@@ -3550,8 +4129,12 @@ function renderVendors(regFilter='', typeFilter='', statusFilter='', search='') 
          </span>`;
     const rcmNote = !isReg
       ? `<div style="font-size:10.5px;color:#b45309;margin-top:3px">RCM applies</div>` : '';
+    const svcCode = v.subVendorCode
+      ? `<code style="font-family:'DM Mono',monospace;font-size:12px;font-weight:700;color:var(--primary);background:var(--primary-light);padding:2px 8px;border-radius:5px;border:1px solid var(--primary)">${v.subVendorCode}</code>`
+      : `<span style="color:var(--text-3);font-size:12px">—</span>`;
     return `<tr>
       <td><code style="font-family:'DM Mono',monospace;font-size:12px;color:var(--primary)">${v.id}</code></td>
+      <td>${svcCode}</td>
       <td>
         <b>${v.name}</b>
         ${!isReg ? `<span style="font-size:10px;background:#fef3c7;color:#92400e;padding:1px 6px;border-radius:4px;margin-left:6px;font-weight:600">RCM</span>` : ''}
@@ -3564,7 +4147,7 @@ function renderVendors(regFilter='', typeFilter='', statusFilter='', search='') 
       <td style="color:var(--text-3);font-size:12.5px">${v.date}</td>
       <td><button class="btn btn-secondary btn-sm" onclick="event.stopPropagation()">Edit</button></td>
     </tr>`;
-  }).join('') || `<tr><td colspan="9" style="text-align:center;padding:30px;color:var(--text-3)">No vendors found</td></tr>`;
+  }).join('') || `<tr><td colspan="10" style="text-align:center;padding:30px;color:var(--text-3)">No vendors found</td></tr>`;
 }
 
 function showVendorForm() {
@@ -3578,6 +4161,8 @@ function showVendorForm() {
    'v-account','v-ifsc','v-contact','v-email','v-phone','v-project'].forEach(id => {
     const el = document.getElementById(id); if (el) el.value = '';
   });
+  // Reset sub vendor code panel
+  resetSVCPanel();
   document.getElementById('vendor-modal').style.display = 'flex';
 }
 
@@ -3716,10 +4301,19 @@ function submitVendor() {
     if(!reason){ toast('Please select the reason for non-registration','error'); return; }
   }
 
+  // Validate manual SVC if that tab is active
+  if(currentSVCTab === 'manual') {
+    const manVal = document.getElementById('svc-manual-input')?.value.trim() || '';
+    if(!manVal){ toast('Please enter a Sub Vendor Code or switch to Auto Generate','error'); return; }
+    if(!validateSVCManual(document.getElementById('svc-manual-input'))){ toast('Sub Vendor Code is invalid — please fix and retry','error'); return; }
+  }
+
+  const subVendorCode = getAssignedSVC();
   const id = 'V-00'+(db.vendors.length+1);
   const newVendor = {
     id,
     name,
+    subVendorCode,
     type: isIntl ? 'International' : 'Domestic',
     registration: isReg ? 'Registered' : 'Unregistered',
     gstin: isReg && !isIntl ? document.getElementById('v-gstin').value.trim() : isIntl ? (document.getElementById('v-taxid')?.value||'N/A') : 'N/A',
@@ -3732,12 +4326,127 @@ function submitVendor() {
   db.auditLog.unshift({
     ts: new Date().toLocaleString(), event:'Create', entity:'Vendor', entityId:id,
     actor: document.getElementById('user-name-sidebar').textContent, role: currentRole,
-    detail: `${isReg?'Registered':'Unregistered'} vendor ${name} onboarding submitted`,
+    detail: `${isReg?'Registered':'Unregistered'} vendor ${name} onboarded — Code: ${subVendorCode||'N/A'}`,
   });
   closeVendorModal();
   renderVendors('', '', '', '');
   updateVendorKPIs();
-  toast(`Vendor onboarding submitted${!isReg?' — Finance notified of RCM applicability':''}`);
+  toast(`Vendor onboarded — Sub Vendor Code: ${subVendorCode || 'Not assigned'}${!isReg?' — Finance notified of RCM applicability':''}`);
+}
+
+// ===== SUB VENDOR CODE =====
+let currentSVCTab = 'auto';
+
+function switchSVCTab(tab) {
+  currentSVCTab = tab;
+  ['auto','manual','prefix'].forEach(t => {
+    const tabEl   = document.getElementById('svc-tab-' + t);
+    const panelEl = document.getElementById('svc-panel-' + t);
+    if(!tabEl || !panelEl) return;
+    const isActive = t === tab;
+    tabEl.style.color            = isActive ? 'var(--primary)' : 'var(--text-3)';
+    tabEl.style.borderBottomColor = isActive ? 'var(--primary)' : 'transparent';
+    panelEl.style.display        = isActive ? 'block' : 'none';
+  });
+  if(tab === 'auto')   regenerateSVC();
+  if(tab === 'prefix') updateSVCPreview();
+}
+
+function getSVCNextNum() {
+  return String(db.vendors.length + 1).padStart(3, '0');
+}
+
+function regenerateSVC() {
+  const fmt    = document.getElementById('svc-format')?.value || 'SVC-NNN';
+  const num    = getSVCNextNum();
+  const code   = fmt.replace('NNN', num);
+  const el     = document.getElementById('svc-auto-preview');
+  if(el) el.value = code;
+}
+
+function copySVC() {
+  const val = document.getElementById('svc-auto-preview')?.value || '';
+  if(!val) return;
+  navigator.clipboard?.writeText(val).then(() => toast('Code copied to clipboard', 'success'));
+}
+
+function copySVCPrefix() {
+  const val = document.getElementById('svc-prefix-preview')?.value || '';
+  if(!val) return;
+  navigator.clipboard?.writeText(val).then(() => toast('Code copied to clipboard', 'success'));
+}
+
+function updateSVCPreview() {
+  const prefix  = (document.getElementById('svc-prefix-input')?.value || 'SVC').toUpperCase();
+  const seq     = parseInt(document.getElementById('svc-seq-input')?.value || '1') || 1;
+  const padding = parseInt(document.getElementById('svc-padding')?.value || '3');
+  const numStr  = padding > 0 ? String(seq).padStart(padding, '0') : String(seq);
+  const code    = prefix + '-' + numStr;
+  const el      = document.getElementById('svc-prefix-preview');
+  if(el) el.value = code;
+}
+
+function validateSVCManual(input) {
+  const val     = input.value.trim();
+  const errEl   = document.getElementById('svc-manual-error');
+  const hintEl  = document.getElementById('svc-manual-hint');
+  const existing = db.vendors.some(v => v.subVendorCode === val);
+  if(val.length > 20) {
+    errEl.style.display = 'block';
+    errEl.textContent   = '❌ Code must be 20 characters or less';
+    return false;
+  }
+  if(val && !/^[A-Z0-9\-]+$/.test(val)) {
+    errEl.style.display = 'block';
+    errEl.textContent   = '❌ Only uppercase letters, numbers and hyphens allowed';
+    return false;
+  }
+  if(val && existing) {
+    errEl.style.display = 'block';
+    errEl.textContent   = '❌ This code already exists in the vendor master';
+    return false;
+  }
+  errEl.style.display = 'none';
+  if(val) {
+    hintEl.textContent  = `✅ ${val.length}/20 characters — code is available`;
+    hintEl.style.color  = 'var(--success)';
+  } else {
+    hintEl.textContent  = 'Alphanumeric, hyphens allowed — max 20 chars';
+    hintEl.style.color  = '';
+  }
+  return true;
+}
+
+function getAssignedSVC() {
+  // Returns the sub vendor code to store based on active tab
+  switch(currentSVCTab) {
+    case 'manual': {
+      const val = document.getElementById('svc-manual-input')?.value.trim() || '';
+      return val || null;
+    }
+    case 'prefix': {
+      return document.getElementById('svc-prefix-preview')?.value || null;
+    }
+    default: {
+      return document.getElementById('svc-auto-preview')?.value || null;
+    }
+  }
+}
+
+function resetSVCPanel() {
+  currentSVCTab = 'auto';
+  switchSVCTab('auto');
+  const manInput = document.getElementById('svc-manual-input');
+  if(manInput) { manInput.value = ''; }
+  const errEl = document.getElementById('svc-manual-error');
+  if(errEl) errEl.style.display = 'none';
+  const hintEl = document.getElementById('svc-manual-hint');
+  if(hintEl) { hintEl.textContent = 'Alphanumeric, hyphens allowed — max 20 chars'; hintEl.style.color = ''; }
+  const prefixEl = document.getElementById('svc-prefix-input');
+  if(prefixEl) prefixEl.value = 'SVC';
+  const seqEl = document.getElementById('svc-seq-input');
+  if(seqEl) seqEl.value = '1';
+  regenerateSVC();
 }
 
 // ===== PURCHASE REQUISITIONS =====
@@ -4341,6 +5050,353 @@ function updateExpenseSubcategory(){
 function togglePOMode(el) {
   document.getElementById('pr-section').style.display=el.value==='pr'?'block':'none';
 }
+// ===== VENDOR CODE CARD =====
+function switchVendorCodeTab(tab, el) {
+  ['info','subcode','invoicing','gst','bank','contact','history'].forEach(v => {
+    const d = document.getElementById('vc-view-'+v);
+    if(d) d.style.display = v===tab ? 'block' : 'none';
+  });
+  document.querySelectorAll('#po-vendor-code-card .tab').forEach(t => t.classList.remove('active'));
+  if(el) el.classList.add('active');
+  if(tab === 'invoicing') initInvoicingPanel();
+}
+
+// ===== INVOICING PANEL =====
+let currentInvFreq = null;
+let invMilestones  = [{desc:'Delivery', pct:50, date:''}, {desc:'Acceptance', pct:50, date:''}];
+
+function initInvoicingPanel() {
+  // Load saved settings if vendor has them
+  const sysId = document.getElementById('vc-subcode-sysid')?.textContent;
+  const vendor = db.vendors.find(v => v.id === sysId);
+  if(vendor?.invoicingFreq) {
+    selectInvoicingFreq(vendor.invoicingFreq, false);
+  } else {
+    // Reset to empty state
+    if(currentInvFreq) selectInvoicingFreq(currentInvFreq, false);
+  }
+}
+
+const INV_FREQ_META = {
+  monthly:   { icon:'📅', label:'Monthly',   color:'#1d4ed8', bg:'#dbeafe' },
+  quarterly: { icon:'🗓️', label:'Quarterly', color:'#7c3aed', bg:'#ede9fe' },
+  yearly:    { icon:'📆', label:'Yearly',     color:'#065f46', bg:'#d1fae5' },
+  milestone: { icon:'🏁', label:'Milestone',  color:'#b45309', bg:'#fef3c7' },
+  other:     { icon:'⚙️', label:'Custom',     color:'#475569', bg:'#f1f5f9' },
+};
+
+function selectInvoicingFreq(freq, animate=true) {
+  currentInvFreq = freq;
+
+  // Update card styles
+  ['monthly','quarterly','yearly','milestone','other'].forEach(f => {
+    const card = document.getElementById('ifc-'+f);
+    if(!card) return;
+    const isActive = f === freq;
+    const meta = INV_FREQ_META[f];
+    card.style.borderColor  = isActive ? meta.color : 'var(--border)';
+    card.style.background   = isActive ? meta.bg    : 'var(--surface)';
+    const title = card.querySelector('div:nth-child(2)');
+    if(title) title.style.color = isActive ? meta.color : 'var(--text)';
+  });
+
+  // Show matching detail panel, hide others
+  ['monthly','quarterly','yearly','milestone','other'].forEach(f => {
+    const panel = document.getElementById('inv-detail-'+f);
+    if(panel) panel.style.display = f===freq ? 'block' : 'none';
+  });
+
+  // Init milestone list if needed
+  if(freq === 'milestone') renderInvMilestones();
+
+  // Show summary bar
+  const meta = INV_FREQ_META[freq] || {};
+  const bar  = document.getElementById('inv-summary-bar');
+  const icon = document.getElementById('inv-summary-icon');
+  const lbl  = document.getElementById('inv-summary-label');
+  const stat = document.getElementById('inv-save-status');
+  if(bar)  bar.style.display = 'block';
+  if(icon) icon.textContent  = meta.icon  || '📅';
+  if(lbl)  { lbl.textContent = meta.label || freq; lbl.style.color = meta.color || 'var(--primary)'; }
+  if(stat) stat.style.display = 'none';
+}
+
+function renderInvMilestones() {
+  const list = document.getElementById('inv-milestone-list');
+  if(!list) return;
+  const total = invMilestones.reduce((a,m) => a+m.pct, 0);
+  list.innerHTML = invMilestones.map((m,i) => `
+    <div style="display:grid;grid-template-columns:1fr 90px 160px 36px;gap:8px;align-items:center;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:8px">
+      <input value="${m.desc}" placeholder="Milestone description"
+        style="border:1.5px solid var(--border);border-radius:6px;padding:6px 9px;font-size:13px"
+        oninput="invMilestones[${i}].desc=this.value"/>
+      <div style="position:relative">
+        <input type="number" value="${m.pct}" min="1" max="100"
+          style="border:1.5px solid var(--border);border-radius:6px;padding:6px 22px 6px 9px;font-size:13px;width:100%"
+          oninput="invMilestones[${i}].pct=+this.value;renderInvMilestones()"/>
+        <span style="position:absolute;right:7px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--text-3);pointer-events:none">%</span>
+      </div>
+      <input type="date" value="${m.date}"
+        style="border:1.5px solid var(--border);border-radius:6px;padding:6px 9px;font-size:12.5px"
+        oninput="invMilestones[${i}].date=this.value"/>
+      <button onclick="removeInvMilestone(${i})" style="width:32px;height:32px;border:1.5px solid var(--danger);border-radius:6px;background:none;color:var(--danger);cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center">×</button>
+    </div>`).join('');
+
+  const pctBar = total === 100
+    ? `<span style="color:var(--success);font-weight:700">✅ ${total}% — Total matches PO value</span>`
+    : `<span style="color:${total>100?'var(--danger)':'var(--warning)'};font-weight:700">${total>100?'❌':'⚠️'} ${total}% allocated — ${total>100?'exceeds':'remaining: '+(100-total)+'%'}</span>`;
+  const existing = document.getElementById('inv-milestone-pct-bar');
+  if(existing) existing.innerHTML = pctBar;
+  else {
+    const bar = document.createElement('div');
+    bar.id = 'inv-milestone-pct-bar';
+    bar.style.cssText = 'margin-top:8px;font-size:12.5px';
+    bar.innerHTML = pctBar;
+    list.after(bar);
+  }
+}
+
+function addInvMilestone() {
+  invMilestones.push({desc:'', pct:0, date:''});
+  renderInvMilestones();
+}
+
+function removeInvMilestone(i) {
+  invMilestones.splice(i,1);
+  renderInvMilestones();
+}
+
+function saveInvoicingSettings() {
+  if(!currentInvFreq){ toast('Please select an invoicing frequency','error'); return; }
+
+  const sysId = document.getElementById('vc-subcode-sysid')?.textContent;
+  const vendor = db.vendors.find(v => v.id === sysId);
+
+  // Collect settings based on frequency
+  let detail = {};
+  switch(currentInvFreq){
+    case 'monthly':
+      detail = {
+        day:      document.getElementById('inv-monthly-day')?.value,
+        due:      document.getElementById('inv-monthly-due')?.value,
+        start:    document.getElementById('inv-monthly-start')?.value,
+        reminder: document.getElementById('inv-monthly-reminder')?.value,
+      }; break;
+    case 'quarterly':
+      detail = {
+        start:   document.getElementById('inv-quarterly-start')?.value,
+        timing:  document.getElementById('inv-quarterly-timing')?.value,
+        due:     document.getElementById('inv-quarterly-due')?.value,
+        fy:      document.getElementById('inv-quarterly-fy')?.value,
+      }; break;
+    case 'yearly':
+      detail = {
+        date:  document.getElementById('inv-yearly-date')?.value,
+        mode:  document.getElementById('inv-yearly-mode')?.value,
+        due:   document.getElementById('inv-yearly-due')?.value,
+        type:  document.getElementById('inv-yearly-type')?.value,
+      }; break;
+    case 'milestone':
+      if(invMilestones.reduce((a,m)=>a+m.pct,0) !== 100){
+        toast('Milestone percentages must total exactly 100%','error'); return;
+      }
+      detail = { milestones: [...invMilestones] };
+      break;
+    case 'other':
+      detail = {
+        desc:  document.getElementById('inv-other-desc')?.value,
+        freq:  document.getElementById('inv-other-freq')?.value,
+        due:   document.getElementById('inv-other-due')?.value,
+        notes: document.getElementById('inv-other-notes')?.value,
+      }; break;
+  }
+
+  if(vendor) {
+    vendor.invoicingFreq    = currentInvFreq;
+    vendor.invoicingDetail  = detail;
+    vendor.invoicingUpdated = new Date().toISOString().slice(0,10);
+  }
+
+  db.auditLog.unshift({
+    ts: new Date().toLocaleString(), event:'Edit', entity:'Vendor',
+    entityId: sysId || '—',
+    actor: document.getElementById('user-name-sidebar')?.textContent || '—',
+    role: currentRole,
+    detail: `Invoicing frequency set to ${INV_FREQ_META[currentInvFreq]?.label || currentInvFreq} for PO vendor`,
+  });
+
+  const stat = document.getElementById('inv-save-status');
+  if(stat){
+    stat.style.display = 'block';
+    stat.textContent   = `✅ Invoicing settings saved — ${INV_FREQ_META[currentInvFreq]?.label} schedule applied`;
+  }
+  toast(`Invoicing: ${INV_FREQ_META[currentInvFreq]?.label} schedule saved`, 'success');
+}
+
+function loadVendorCodeCard(vendorName) {
+  const card = document.getElementById('po-vendor-code-card');
+  if(!vendorName) { if(card) card.style.display='none'; return; }
+  const vendor = db.vendors.find(v => v.name === vendorName);
+  if(!card) return;
+  card.style.display = 'block';
+
+  const bankData = {
+    'Synapse Tech Pvt Ltd':    { bank:'HDFC Bank',  acc:'XXXXXXXX4521', ifsc:'HDFC0001234', contact:'Rahul Mehta',  email:'rahul.mehta@synapsetech.in',    phone:'+91 98200 12345', apEmail:'accounts@synapsetech.in',           apPhone:'+91 22 4567 8901' },
+    'CloudNet Services':       { bank:'ICICI Bank', acc:'XXXXXXXX8832', ifsc:'ICIC0004567', contact:'Sneha Iyer',   email:'sneha.iyer@cloudnet.io',         phone:'+91 97300 45678', apEmail:'billing@cloudnet.io',               apPhone:'+91 80 2345 6789' },
+    'Infra Solutions Pvt Ltd': { bank:'SBI',         acc:'XXXXXXXX2210', ifsc:'SBIN0007890', contact:'Arjun Nair',  email:'arjun@infrasolutions.co.in',     phone:'+91 99400 78901', apEmail:'finance@infrasolutions.co.in',       apPhone:'+91 11 3456 7890' },
+    'GlobalSource Inc':        { bank:'Citibank',    acc:'XXXXXXXX6677', ifsc:'CITI0000001', contact:'James Wilson',email:'james.wilson@globalsource.com',   phone:'+1 415 234 5678', apEmail:'ar@globalsource.com',               apPhone:'+1 415 234 5679' },
+    'FuturePrint Supplies':    { bank:'Axis Bank',   acc:'XXXXXXXX9944', ifsc:'AXIS0003210', contact:'Pooja Sharma',email:'pooja@futureprintsupplies.in',   phone:'+91 96500 23456', apEmail:'accounts@futureprintsupplies.in',   apPhone:'+91 44 5678 9012' },
+  };
+  const addrData = {
+    'Synapse Tech Pvt Ltd':    'Plot No. 14, MIDC Industrial Area, Andheri East, Mumbai – 400093, Maharashtra',
+    'CloudNet Services':        '3rd Floor, Prestige Tech Park, Marathahalli, Bengaluru – 560103, Karnataka',
+    'Infra Solutions Pvt Ltd': 'B-12, Sector 63, Noida – 201307, Uttar Pradesh',
+    'GlobalSource Inc':         '450 Market Street, Suite 1200, San Francisco, CA 94105, USA',
+    'FuturePrint Supplies':    '7/A, Anna Salai, T. Nagar, Chennai – 600017, Tamil Nadu',
+  };
+  const tdsData = {
+    'Synapse Tech Pvt Ltd':    '194C — Contractors / 194J — Professional',
+    'CloudNet Services':       '194J — Professional Services',
+    'Infra Solutions Pvt Ltd':'194C — Contractors',
+    'GlobalSource Inc':        '195 — Foreign Remittance',
+    'FuturePrint Supplies':   '194C — Contractors',
+  };
+
+  const bd   = bankData[vendorName] || { bank:'—',acc:'—',ifsc:'—',contact:'—',email:'—',phone:'—',apEmail:'—',apPhone:'—' };
+  const addr = addrData[vendorName] || '—';
+  const fmt  = n => '₹'+Number(n).toLocaleString('en-IN');
+  const set  = (id, val) => { const el=document.getElementById(id); if(el) el.textContent=val||'—'; };
+
+  if(vendor) {
+    document.getElementById('po-vendor-code-id').textContent = vendor.id;
+    const badge = document.getElementById('po-vendor-status-badge');
+    badge.textContent = '● '+vendor.status;
+    badge.style.background = vendor.status==='Approved'?'#d1fae5':vendor.status==='Pending'?'#fef3c7':'#fee2e2';
+    badge.style.color      = vendor.status==='Approved'?'#065f46':vendor.status==='Pending'?'#92400e':'#dc2626';
+
+    // Info
+    set('vc-name', vendor.name); set('vc-code', vendor.id); set('vc-type', vendor.type);
+    set('vc-category', vendor.category); set('vc-date', vendor.date);
+    set('vc-registration', vendor.registration); set('vc-address', addr);
+
+    // Sub Vendor Code tab
+    const svc = vendor.subVendorCode || null;
+    const svcDisplay = document.getElementById('vc-subcode-display');
+    if(svcDisplay){
+      svcDisplay.textContent = svc || '—';
+      svcDisplay.style.color = svc ? 'var(--primary)' : 'var(--text-3)';
+      svcDisplay.style.letterSpacing = svc ? '2px' : 'normal';
+    }
+    set('vc-subcode-sysid', vendor.id);
+    set('vc-subcode-type', svc ? (svc.startsWith('SVC-') || svc.startsWith('V-') ? 'Auto Generated' : 'Manual / Custom') : 'Not Assigned');
+    set('vc-subcode-date', vendor.date);
+    set('vc-subcode-vendor', vendor.name);
+    // Pre-fill override input with current code
+    const overrideInput = document.getElementById('vc-subcode-override-input');
+    if(overrideInput) overrideInput.value = svc || '';
+    const overrideStatus = document.getElementById('vc-subcode-override-status');
+    if(overrideStatus) overrideStatus.style.display = 'none';
+    // Store vendor name on override button for reference
+    const applyBtn = document.querySelector('[onclick="applyVCSubCodeOverride()"]');
+    if(applyBtn) applyBtn.dataset.vendorName = vendor.name;
+
+    // GST
+    set('vc-gstin', vendor.gstin&&vendor.gstin!=='N/A'?vendor.gstin:'Not Registered');
+    set('vc-pan', vendor.pan||'—');
+    set('vc-tds', tdsData[vendorName]||'194C — Contractors');
+    set('vc-msme', vendor.type==='International'?'N/A':'No');
+    const hasGst = vendor.gstin && vendor.gstin!=='N/A' && vendor.gstin!=='';
+    const gstStatus=document.getElementById('vc-gst-status');
+    if(gstStatus){ gstStatus.textContent=hasGst?'✅ Registered':'⚠ Unregistered'; gstStatus.style.color=hasGst?'var(--success)':'var(--warning)'; }
+    const gw=document.getElementById('vc-gst-warning'); const go=document.getElementById('vc-gst-ok');
+    if(gw) gw.style.display=hasGst?'none':'block';
+    if(go) go.style.display=hasGst?'block':'none';
+  }
+
+  // Bank
+  set('vc-bank-name', bd.bank); set('vc-bank-acc', bd.acc); set('vc-bank-ifsc', bd.ifsc);
+
+  // Contact
+  const initials = bd.contact.split(' ').map(w=>w[0]||'').join('').toUpperCase();
+  set('vc-primary-avatar', initials); set('vc-primary-name', bd.contact);
+  set('vc-primary-email', bd.email); set('vc-primary-phone', bd.phone);
+  set('vc-ap-email', bd.apEmail); set('vc-ap-phone', bd.apPhone);
+
+  // History
+  const vPOs = db.pos.filter(p => p.vendor===vendorName);
+  const approved = vPOs.filter(p=>p.status==='Approved').length;
+  const pending  = vPOs.filter(p=>p.status==='In Review'||p.status==='Draft').length;
+  const totalVal = vPOs.reduce((a,p)=>a+(p.total||0),0);
+  set('vc-hist-total', vPOs.length);
+  set('vc-hist-approved', approved);
+  set('vc-hist-pending', pending);
+  set('vc-hist-value', fmt(totalVal));
+  const sc = { Approved:'#d1fae5','In Review':'#fef3c7',Draft:'#f1f5f9',Rejected:'#fee2e2' };
+  const st = { Approved:'#065f46','In Review':'#92400e',Draft:'#475569',Rejected:'#dc2626' };
+  const tbody = document.getElementById('vc-hist-table');
+  if(tbody) tbody.innerHTML = vPOs.length
+    ? vPOs.map(p=>`<tr>
+        <td style="padding:8px 12px;font-family:'DM Mono',monospace;font-size:12px;color:var(--primary);font-weight:700">${p.id}</td>
+        <td style="padding:8px 12px;font-size:13px;color:var(--text)">${p.title}</td>
+        <td style="padding:8px 12px;font-size:12px;color:var(--text-3)">${p.created}</td>
+        <td style="padding:8px 12px;text-align:right;font-family:'DM Mono',monospace;font-size:13px;font-weight:700;color:var(--primary)">${fmt(p.total)}</td>
+        <td style="padding:8px 12px"><span style="padding:3px 10px;border-radius:12px;font-size:12px;font-weight:700;background:${sc[p.status]||'#f1f5f9'};color:${st[p.status]||'#475569'}">${p.status}</span></td>
+      </tr>`).join('')
+    : '<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--text-3)">No previous POs with this vendor</td></tr>';
+
+  switchVendorCodeTab('info', document.getElementById('vc-tab-info'));
+}
+
+function copyVCSubCode() {
+  const val = document.getElementById('vc-subcode-display')?.textContent || '';
+  if(!val || val === '—') { toast('No sub vendor code to copy','error'); return; }
+  navigator.clipboard?.writeText(val).then(() => toast('Sub Vendor Code copied: ' + val, 'success'));
+}
+
+function applyVCSubCodeOverride() {
+  const input    = document.getElementById('vc-subcode-override-input');
+  const reasonEl = document.getElementById('vc-subcode-override-reason');
+  const statusEl = document.getElementById('vc-subcode-override-status');
+  const newCode  = (input?.value || '').trim().toUpperCase();
+  const reason   = (reasonEl?.value || '').trim();
+
+  if(!newCode){ toast('Please enter a new Sub Vendor Code','error'); return; }
+  if(!/^[A-Z0-9\-]{1,20}$/.test(newCode)){
+    toast('Code must be uppercase alphanumeric with hyphens, max 20 chars','error'); return;
+  }
+
+  const sysId  = document.getElementById('vc-subcode-sysid')?.textContent;
+  const vendor = db.vendors.find(v => v.id === sysId);
+  if(!vendor){ toast('Vendor not found in master','error'); return; }
+
+  const dup = db.vendors.find(v => v.id !== sysId && v.subVendorCode === newCode);
+  if(dup){ toast('Code ' + newCode + ' is already assigned to ' + dup.name,'error'); return; }
+
+  const old = vendor.subVendorCode || '—';
+  vendor.subVendorCode = newCode;
+  db.auditLog.unshift({
+    ts: new Date().toLocaleString(), event:'Edit', entity:'Vendor', entityId:vendor.id,
+    actor: document.getElementById('user-name-sidebar')?.textContent || '—',
+    role: currentRole,
+    detail: 'Sub Vendor Code updated: ' + old + ' → ' + newCode + (reason ? ' | Reason: ' + reason : ''),
+  });
+
+  const disp = document.getElementById('vc-subcode-display');
+  if(disp){ disp.textContent=newCode; disp.style.color='var(--primary)'; disp.style.letterSpacing='2px'; }
+  const typeEl = document.getElementById('vc-subcode-type');
+  if(typeEl) typeEl.textContent = 'Manual Override';
+  if(statusEl){
+    statusEl.style.display='block';
+    statusEl.style.background='#d1fae5';
+    statusEl.style.border='1px solid #6ee7b7';
+    statusEl.style.color='#065f46';
+    statusEl.textContent='✅ Sub Vendor Code updated to ' + newCode + ' — saved to vendor master';
+  }
+  if(reasonEl) reasonEl.value='';
+  toast('Sub Vendor Code updated: ' + newCode, 'success');
+}
+
+
 function switchLineType(type) {
   db.lineItemType=type;
   document.getElementById('tab-goods').classList.toggle('active',type==='goods');
@@ -4367,6 +5423,10 @@ function renderLineItems() {
   const vendorName = document.getElementById('po-vendor')?.value || '';
   const taxType    = getVendorTaxType(vendorName);
   const isSplit    = taxType === 'CGST_SGST';
+
+  // Load vendor code card whenever vendor changes
+  loadVendorCodeCard(vendorName);
+
   const head = document.getElementById('line-items-head');
   const body = document.getElementById('line-items-body');
   const foot = document.getElementById('line-items-foot');
