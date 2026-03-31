@@ -450,6 +450,12 @@ textarea{resize:vertical;min-height:80px}
           <div class="kpi-value" style="font-size:22px" id="kpi-v-unregistered">—</div>
           <div class="kpi-sub">RCM may apply</div>
         </div>
+        <div class="kpi-card" style="padding:14px 16px;border-right:4px solid #7c3aed">
+          <div class="kpi-icon" style="font-size:20px">🏅</div>
+          <div class="kpi-label">MSME Vendors</div>
+          <div class="kpi-value" style="font-size:22px" id="kpi-v-msme">—</div>
+          <div class="kpi-sub" id="kpi-v-msme-sub">Micro/Small/Medium</div>
+        </div>
         <div class="kpi-card green" style="padding:14px 16px">
           <div class="kpi-icon" style="font-size:20px">🟢</div>
           <div class="kpi-label">Approved</div>
@@ -467,22 +473,31 @@ textarea{resize:vertical;min-height:80px}
       <!-- Registration Tab Switcher -->
       <div style="display:flex;gap:0;margin-bottom:16px">
         <button id="vreg-tab-all" onclick="setVendorRegTab('all',this)"
-          style="flex:1;padding:11px 0;border:2px solid var(--primary);border-right:none;border-radius:8px 0 0 8px;background:var(--primary);color:#fff;font-family:'DM Sans',sans-serif;font-size:13.5px;font-weight:700;cursor:pointer;transition:all 0.15s">
+          style="flex:1;padding:11px 0;border:2px solid var(--primary);border-right:none;border-radius:8px 0 0 8px;background:var(--primary);color:#fff;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all 0.15s">
           🏢 All Vendors
         </button>
         <button id="vreg-tab-registered" onclick="setVendorRegTab('Registered',this)"
-          style="flex:1;padding:11px 0;border:2px solid var(--border);border-right:none;background:#fff;color:var(--text-2);font-family:'DM Sans',sans-serif;font-size:13.5px;font-weight:700;cursor:pointer;transition:all 0.15s">
+          style="flex:1;padding:11px 0;border:2px solid var(--border);border-right:none;background:#fff;color:var(--text-2);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all 0.15s">
           ✅ GST Registered
         </button>
         <button id="vreg-tab-unregistered" onclick="setVendorRegTab('Unregistered',this)"
-          style="flex:1;padding:11px 0;border:2px solid var(--border);border-radius:0 8px 8px 0;background:#fff;color:var(--text-2);font-family:'DM Sans',sans-serif;font-size:13.5px;font-weight:700;cursor:pointer;transition:all 0.15s">
+          style="flex:1;padding:11px 0;border:2px solid var(--border);border-right:none;background:#fff;color:var(--text-2);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all 0.15s">
           ⚠️ Unregistered
+        </button>
+        <button id="vreg-tab-msme" onclick="setVendorRegTab('MSME',this)"
+          style="flex:1;padding:11px 0;border:2px solid var(--border);border-radius:0 8px 8px 0;background:#fff;color:var(--text-2);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all 0.15s">
+          🏅 MSME Vendors
         </button>
       </div>
 
       <!-- Unregistered warning banner -->
       <div id="vreg-unreg-notice" style="display:none;margin-bottom:14px;padding:12px 16px;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;font-size:13px;color:#92400e;line-height:1.6">
         ⚠️ <b>Unregistered Vendor Notice:</b> Purchases from unregistered vendors may attract <b>Reverse Charge Mechanism (RCM)</b> under GST. Finance team should self-assess and remit GST liability. Ensure PAN is captured and reason for non-registration is documented.
+      </div>
+
+      <!-- MSME info banner -->
+      <div id="vreg-msme-notice" style="display:none;margin-bottom:14px;padding:12px 16px;background:#f5f3ff;border:1px solid #c4b5fd;border-radius:8px;font-size:13px;color:#5b21b6;line-height:1.6">
+        🏅 <b>MSME Vendor Notice:</b> Payments to MSME vendors must be made within <b>45 days</b> of acceptance as per the MSMED Act, 2006. Delayed payments attract compound interest at <b>3× RBI bank rate</b>. Ensure Udyam Registration Numbers are verified and MSME certificates are on file.
       </div>
 
       <!-- Filter bar -->
@@ -509,7 +524,7 @@ textarea{resize:vertical;min-height:80px}
               <tr>
                 <th>Vendor ID</th><th>Sub Vendor Code</th><th>Legal Name</th><th>Type</th>
                 <th>GST Registration</th><th>GSTIN / Tax ID</th>
-                <th>Category</th><th>Onboarding Status</th><th>Onboarded</th><th>Action</th>
+                <th>MSME</th><th>Category</th><th>Onboarding Status</th><th>Onboarded</th><th>Action</th>
               </tr>
             </thead>
             <tbody id="vendor-table-body"></tbody>
@@ -637,6 +652,7 @@ textarea{resize:vertical;min-height:80px}
                 <th>Department</th>
                 <th>Category</th>
                 <th>Priority</th>
+                <th>Currency</th>
                 <th>Est. Budget</th>
                 <th>Status</th>
                 <th>Linked PO</th>
@@ -1127,39 +1143,29 @@ textarea{resize:vertical;min-height:80px}
             <!-- ═══ Tab: Invoicing ═══ -->
             <div id="vc-view-invoicing" style="display:none">
 
-              <!-- Frequency selector cards -->
+              <!-- Frequency dropdown -->
               <div style="margin-bottom:18px">
-                <div style="font-size:11.5px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.7px;margin-bottom:10px">Invoicing Frequency <span class="req">*</span></div>
-                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px">
-                  <div id="ifc-monthly"   onclick="selectInvoicingFreq('monthly')"
-                    style="padding:14px 10px;border:2px solid var(--border);border-radius:10px;cursor:pointer;transition:all 0.15s;text-align:center;background:var(--surface)">
-                    <div style="font-size:24px;margin-bottom:6px">📅</div>
-                    <div style="font-size:13px;font-weight:700;color:var(--text)">Monthly</div>
-                    <div style="font-size:11px;color:var(--text-3);margin-top:3px">Every calendar month</div>
-                  </div>
-                  <div id="ifc-quarterly" onclick="selectInvoicingFreq('quarterly')"
-                    style="padding:14px 10px;border:2px solid var(--border);border-radius:10px;cursor:pointer;transition:all 0.15s;text-align:center;background:var(--surface)">
-                    <div style="font-size:24px;margin-bottom:6px">🗓️</div>
-                    <div style="font-size:13px;font-weight:700;color:var(--text)">Quarterly</div>
-                    <div style="font-size:11px;color:var(--text-3);margin-top:3px">Every 3 months</div>
-                  </div>
-                  <div id="ifc-yearly"    onclick="selectInvoicingFreq('yearly')"
-                    style="padding:14px 10px;border:2px solid var(--border);border-radius:10px;cursor:pointer;transition:all 0.15s;text-align:center;background:var(--surface)">
-                    <div style="font-size:24px;margin-bottom:6px">📆</div>
-                    <div style="font-size:13px;font-weight:700;color:var(--text)">Yearly</div>
-                    <div style="font-size:11px;color:var(--text-3);margin-top:3px">Annual invoice</div>
-                  </div>
-                  <div id="ifc-milestone" onclick="selectInvoicingFreq('milestone')"
-                    style="padding:14px 10px;border:2px solid var(--border);border-radius:10px;cursor:pointer;transition:all 0.15s;text-align:center;background:var(--surface)">
-                    <div style="font-size:24px;margin-bottom:6px">🏁</div>
-                    <div style="font-size:13px;font-weight:700;color:var(--text)">Milestone</div>
-                    <div style="font-size:11px;color:var(--text-3);margin-top:3px">On delivery / stage</div>
-                  </div>
-                  <div id="ifc-other"     onclick="selectInvoicingFreq('other')"
-                    style="padding:14px 10px;border:2px solid var(--border);border-radius:10px;cursor:pointer;transition:all 0.15s;text-align:center;background:var(--surface)">
-                    <div style="font-size:24px;margin-bottom:6px">⚙️</div>
-                    <div style="font-size:13px;font-weight:700;color:var(--text)">Other</div>
-                    <div style="font-size:11px;color:var(--text-3);margin-top:3px">Custom schedule</div>
+                <div class="form-grid" style="margin-bottom:0">
+                  <div class="form-group" style="margin-bottom:0">
+                    <label style="font-size:11.5px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.7px">Invoicing Frequency <span class="req">*</span></label>
+                    <div style="display:flex;align-items:center;gap:10px">
+                      <div style="position:relative;flex:1">
+                        <select id="inv-freq-select" onchange="selectInvoicingFreq(this.value)"
+                          style="width:100%;appearance:none;padding:10px 40px 10px 14px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;font-weight:600;color:var(--text);background:var(--card);cursor:pointer;transition:border-color 0.15s">
+                          <option value="">— Select Invoicing Frequency —</option>
+                          <option value="monthly">📅 Monthly — Every calendar month</option>
+                          <option value="halfyearly">📆 Half Yearly — Every 6 months</option>
+                          <option value="quarterly">🗓️ Quarterly — Every 3 months</option>
+                          <option value="yearly">📆 Yearly — Annual invoice</option>
+                          <option value="milestone">🏁 Milestone — On delivery / stage</option>
+                          <option value="other">⚙️ Other — Custom schedule</option>
+                        </select>
+                        <div style="position:absolute;right:12px;top:50%;transform:translateY(-50%);pointer-events:none;font-size:12px;color:var(--text-3)">▼</div>
+                      </div>
+                      <!-- Dynamic freq badge -->
+                      <div id="inv-freq-badge" style="display:none;flex-shrink:0;padding:6px 14px;border-radius:20px;font-size:13px;font-weight:700;white-space:nowrap"></div>
+                    </div>
+                    <span class="form-hint" id="inv-freq-hint">Select how often the vendor should raise invoices against this PO</span>
                   </div>
                 </div>
               </div>
@@ -1232,6 +1238,44 @@ textarea{resize:vertical;min-height:80px}
                     <select id="inv-quarterly-fy">
                       <option>FY 2025–26</option><option>FY 2026–27</option><option>FY 2027–28</option>
                     </select>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Half Yearly settings -->
+              <div id="inv-detail-halfyearly" style="display:none">
+                <div class="section-label" style="margin-top:0">Half Yearly Settings</div>
+                <div class="form-grid">
+                  <div class="form-group">
+                    <label>First Half Start Month</label>
+                    <select id="inv-halfyearly-start">
+                      <option value="apr">April (H1: Apr–Sep / H2: Oct–Mar)</option>
+                      <option value="jan">January (H1: Jan–Jun / H2: Jul–Dec)</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label>Invoice Raised</label>
+                    <select id="inv-halfyearly-timing">
+                      <option>Start of half year</option>
+                      <option>End of half year</option>
+                      <option>15 days after half year end</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label>Payment Terms</label>
+                    <select id="inv-halfyearly-due">
+                      <option>Net 30</option><option>Net 45</option><option>Net 60</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label>Applicable from FY</label>
+                    <select id="inv-halfyearly-fy">
+                      <option>FY 2025–26</option><option>FY 2026–27</option><option>FY 2027–28</option>
+                    </select>
+                  </div>
+                  <div class="form-group form-full">
+                    <label>Notes</label>
+                    <input type="text" id="inv-halfyearly-notes" placeholder="e.g. H1 invoice in April, H2 invoice in October"/>
                   </div>
                 </div>
               </div>
@@ -3281,13 +3325,47 @@ textarea{resize:vertical;min-height:80px}
           <input type="text" id="v-phone" placeholder="+91 98765 43210"/>
         </div>
         <div class="form-group" id="v-msme-grp">
-          <label>MSME Status</label>
-          <select id="v-msme">
-            <option>Not Applicable</option>
-            <option>Micro Enterprise</option>
-            <option>Small Enterprise</option>
-            <option>Medium Enterprise</option>
+          <label>MSME Status <span class="req">*</span></label>
+          <select id="v-msme" onchange="toggleMSMEDetails(this.value)">
+            <option value="Not Applicable">Not Applicable</option>
+            <option value="Micro Enterprise">Micro Enterprise</option>
+            <option value="Small Enterprise">Small Enterprise</option>
+            <option value="Medium Enterprise">Medium Enterprise</option>
           </select>
+          <span class="form-hint">Mandatory for domestic vendors</span>
+        </div>
+      </div>
+
+      <!-- ── MSME Details (shown when MSME registered) ── -->
+      <div id="v-msme-details-grp" style="display:none;margin-bottom:14px">
+        <div class="section-label" style="margin-top:0;margin-bottom:8px;color:#7c3aed">MSME Registration Details</div>
+        <div style="background:#f5f3ff;border:1.5px solid #c4b5fd;border-radius:10px;padding:14px 16px">
+          <div class="form-grid" style="margin-bottom:0">
+            <div class="form-group" style="margin-bottom:0">
+              <label>MSME Type <span class="req">*</span></label>
+              <select id="v-msme-type">
+                <option value="">— Select MSME Type —</option>
+                <option value="Manufacturing - Micro">Manufacturing — Micro (Investment ≤ ₹1 Cr, Turnover ≤ ₹5 Cr)</option>
+                <option value="Manufacturing - Small">Manufacturing — Small (Investment ≤ ₹10 Cr, Turnover ≤ ₹50 Cr)</option>
+                <option value="Manufacturing - Medium">Manufacturing — Medium (Investment ≤ ₹50 Cr, Turnover ≤ ₹250 Cr)</option>
+                <option value="Services - Micro">Services — Micro (Investment ≤ ₹1 Cr, Turnover ≤ ₹5 Cr)</option>
+                <option value="Services - Small">Services — Small (Investment ≤ ₹10 Cr, Turnover ≤ ₹50 Cr)</option>
+                <option value="Services - Medium">Services — Medium (Investment ≤ ₹50 Cr, Turnover ≤ ₹250 Cr)</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <label>MSME / Udyam Registration Number <span class="req">*</span></label>
+              <input type="text" id="v-msme-id"
+                placeholder="e.g. UDYAM-MH-00-0000000"
+                oninput="this.value=this.value.toUpperCase();validateMSMEId(this)"
+                style="font-family:'DM Mono',monospace;font-weight:600;letter-spacing:0.3px"/>
+              <span class="form-hint" id="v-msme-id-hint">Format: UDYAM-XX-00-0000000 (12-char state code + 7 digits)</span>
+            </div>
+          </div>
+          <div style="margin-top:10px;padding:8px 12px;background:#ede9fe;border-radius:6px;font-size:12px;color:#5b21b6;display:flex;align-items:flex-start;gap:6px">
+            <span>ℹ️</span>
+            <span><b>MSME Payment Terms:</b> As per MSMED Act, payments to MSME vendors must be made within <b>45 days</b> of acceptance of goods/services. Delayed payment attracts compound interest at 3× RBI bank rate.</span>
+          </div>
         </div>
       </div>
 
@@ -3599,8 +3677,47 @@ textarea{resize:vertical;min-height:80px}
           <input type="date" id="pr-required-by"/>
         </div>
         <div class="form-group">
-          <label>Estimated Budget (₹) <span class="req">*</span></label>
-          <input type="number" id="pr-budget" placeholder="0" min="0"/>
+          <label>Transaction Currency <span class="req">*</span></label>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px" id="pr-currency-chips"></div>
+          <input type="hidden" id="pr-currency" value="INR"/>
+        </div>
+        <div class="form-group">
+          <label>Estimated Budget <span class="req">*</span></label>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span id="pr-budget-symbol" style="font-size:14px;font-weight:700;color:var(--primary);background:var(--primary-light);padding:6px 10px;border-radius:6px;border:1.5px solid var(--primary);flex-shrink:0">₹ INR</span>
+            <input type="number" id="pr-budget" placeholder="0" min="0" style="flex:1"/>
+          </div>
+        </div>
+
+        <!-- FX Rate panel — shown for non-INR currencies -->
+        <div id="pr-fx-panel" style="display:none" class="form-group form-full">
+          <div style="background:#fffbeb;border:1.5px solid #fde68a;border-radius:10px;padding:12px 16px">
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+              <span id="pr-fx-flag" style="font-size:22px">🇺🇸</span>
+              <div style="flex:1;min-width:160px">
+                <label id="pr-fx-label" style="font-size:12px;font-weight:700;color:var(--text-2);display:block;margin-bottom:4px">Exchange Rate (1 USD = ₹ INR)</label>
+                <div style="display:flex;align-items:center;gap:6px">
+                  <input type="number" id="pr-fx-rate" placeholder="e.g. 83.50" min="0.0001" step="0.01"
+                    style="width:130px;border:1.5px solid var(--border);border-radius:6px;padding:6px 8px;font-family:'DM Mono',monospace;font-size:13px;font-weight:600"
+                    oninput="recalcPRCurrencyTotal()"/>
+                  <span style="font-size:12.5px;font-weight:600;color:var(--text-3)">INR per unit</span>
+                </div>
+                <div id="pr-fx-indicative" style="font-size:11.5px;color:#92400e;margin-top:4px">1 USD ≈ ₹83.50</div>
+              </div>
+              <div style="text-align:right;flex-shrink:0">
+                <div style="font-size:11px;color:var(--text-3);margin-bottom:2px">INR Equivalent</div>
+                <div id="pr-inr-equiv" style="font-size:18px;font-weight:800;color:var(--primary);font-family:'DM Mono',monospace">₹0</div>
+              </div>
+            </div>
+            <div style="margin-top:8px;font-size:12px;color:#92400e">
+              ⚠️ <b>Foreign Currency PR:</b> Budget is in <span id="pr-fx-cur-notice">USD</span>. INR equivalent is indicative at the entered rate. Final amount will be confirmed at PO stage.
+            </div>
+          </div>
+        </div>
+
+        <!-- INR notice -->
+        <div id="pr-inr-notice" style="display:flex;align-items:center;gap:8px;padding:8px 14px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;font-size:12.5px;color:#065f46" class="form-group form-full">
+          ✅ <span><b>Domestic INR requisition</b> — No exchange rate required.</span>
         </div>
         <div class="form-group">
           <label>Preferred Vendor</label>
@@ -3633,8 +3750,8 @@ textarea{resize:vertical;min-height:80px}
               <th>Item Description <span style="color:var(--danger)">*</span></th>
               <th>Qty <span style="color:var(--danger)">*</span></th>
               <th>UOM</th>
-              <th>Est. Unit Rate (₹)</th>
-              <th>Est. Total</th>
+              <th id="pr-rate-header">Est. Unit Rate (₹)</th>
+              <th id="pr-total-header">Est. Total</th>
               <th>Specification / Notes</th>
               <th></th>
             </tr>
@@ -4069,29 +4186,34 @@ function switchRole(role, abbr) {
 }
 
 // ===== VENDORS =====
-let currentVendorRegTab = 'all';        // 'all' | 'Registered' | 'Unregistered'
+let currentVendorRegTab = 'all';        // 'all' | 'Registered' | 'Unregistered' | 'MSME'
 let currentVendorReg    = 'registered'; // modal state: 'registered' | 'unregistered'
 let currentVendorGeo    = 'domestic';   // 'domestic' | 'international'
 
 /* ---- Vendor page tab switcher ---- */
 function setVendorRegTab(tab, btnEl) {
   currentVendorRegTab = tab;
-  ['all','registered','unregistered'].forEach(t => {
+  ['all','registered','unregistered','msme'].forEach(t => {
     const b = document.getElementById('vreg-tab-' + t);
     if (!b) return;
-    b.style.background = '';
+    b.style.background = '#fff';
     b.style.color = 'var(--text-2)';
     b.style.borderColor = 'var(--border)';
   });
   if (btnEl) {
-    btnEl.style.background = 'var(--primary)';
-    btnEl.style.color = '#fff';
-    btnEl.style.borderColor = 'var(--primary)';
+    const isMSME = tab === 'MSME';
+    btnEl.style.background  = isMSME ? '#7c3aed' : 'var(--primary)';
+    btnEl.style.color       = '#fff';
+    btnEl.style.borderColor = isMSME ? '#7c3aed' : 'var(--primary)';
   }
-  // Show RCM notice only on Unregistered tab
-  const notice = document.getElementById('vreg-unreg-notice');
-  if (notice) notice.style.display = tab === 'Unregistered' ? 'block' : 'none';
-  renderVendors(tab === 'all' ? '' : tab);
+  // Show/hide notices
+  const unregNotice = document.getElementById('vreg-unreg-notice');
+  const msmeNotice  = document.getElementById('vreg-msme-notice');
+  if (unregNotice) unregNotice.style.display = tab === 'Unregistered' ? 'block' : 'none';
+  if (msmeNotice)  msmeNotice.style.display  = tab === 'MSME'         ? 'block' : 'none';
+
+  const regFilter = (tab === 'all' || tab === 'MSME') ? '' : tab;
+  renderVendors(regFilter, '', '', '', tab === 'MSME');
 }
 
 /* ---- Vendor filters ---- */
@@ -4099,8 +4221,9 @@ function applyVendorFilters() {
   const type   = document.getElementById('vf-type')?.value   || '';
   const status = document.getElementById('vf-status')?.value || '';
   const search = document.querySelector('#page-vendors .search-input input')?.value.toLowerCase() || '';
-  const regFilter = currentVendorRegTab === 'all' ? '' : currentVendorRegTab;
-  renderVendors(regFilter, type, status, search);
+  const isMSME = currentVendorRegTab === 'MSME';
+  const regFilter = (currentVendorRegTab === 'all' || isMSME) ? '' : currentVendorRegTab;
+  renderVendors(regFilter, type, status, search, isMSME);
 }
 
 function filterVendorsByReg(val) { renderVendors(val); }  // legacy compat
@@ -4110,19 +4233,23 @@ function updateVendorKPIs() {
   const total      = db.vendors.length;
   const registered = db.vendors.filter(v => v.registration !== 'Unregistered').length;
   const unreg      = db.vendors.filter(v => v.registration === 'Unregistered').length;
+  const msme       = db.vendors.filter(v => v.msme && v.msme !== 'Not Applicable' && v.msme !== 'N/A').length;
   const approved   = db.vendors.filter(v => v.status === 'Approved').length;
   const pending    = db.vendors.filter(v => v.status === 'Pending' || v.status === 'Rejected').length;
   const regPct     = total ? Math.round(registered / total * 100) : 0;
+  const msmePct    = total ? Math.round(msme / total * 100) : 0;
 
   document.getElementById('kpi-v-total').textContent         = total;
   document.getElementById('kpi-v-registered').textContent    = registered;
   document.getElementById('kpi-v-registered-sub').textContent= `${regPct}% of all vendors`;
   document.getElementById('kpi-v-unregistered').textContent  = unreg;
+  document.getElementById('kpi-v-msme').textContent          = msme;
+  document.getElementById('kpi-v-msme-sub').textContent      = msme > 0 ? `${msmePct}% of vendors · 45-day payment` : 'Micro / Small / Medium';
   document.getElementById('kpi-v-approved').textContent      = approved;
   document.getElementById('kpi-v-pending').textContent       = pending;
 }
 
-function renderVendors(regFilter='', typeFilter='', statusFilter='', search='') {
+function renderVendors(regFilter='', typeFilter='', statusFilter='', search='', msmeOnly=false) {
   updateVendorKPIs();
   const tbody = document.getElementById('vendor-table-body');
   const statusBadge = {Approved:'badge-approved', Pending:'badge-pending', Rejected:'badge-rejected'};
@@ -4130,6 +4257,7 @@ function renderVendors(regFilter='', typeFilter='', statusFilter='', search='') 
   if (regFilter)    list = list.filter(v => v.registration === regFilter);
   if (typeFilter)   list = list.filter(v => v.type === typeFilter);
   if (statusFilter) list = list.filter(v => v.status === statusFilter);
+  if (msmeOnly)     list = list.filter(v => v.msme && v.msme !== 'Not Applicable' && v.msme !== 'N/A');
   if (search)       list = list.filter(v => JSON.stringify(v).toLowerCase().includes(search));
 
   tbody.innerHTML = list.map(v => {
@@ -4146,22 +4274,37 @@ function renderVendors(regFilter='', typeFilter='', statusFilter='', search='') 
     const svcCode = v.subVendorCode
       ? `<code style="font-family:'DM Mono',monospace;font-size:12px;font-weight:700;color:var(--primary);background:var(--primary-light);padding:2px 8px;border-radius:5px;border:1px solid var(--primary)">${v.subVendorCode}</code>`
       : `<span style="color:var(--text-3);font-size:12px">—</span>`;
+
+    // MSME badge
+    const msmeVal = v.msme || 'Not Applicable';
+    const isMSME  = msmeVal !== 'Not Applicable' && msmeVal !== 'N/A';
+    const msmeBadge = isMSME
+      ? `<div>
+           <span style="display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:12px;font-size:11.5px;font-weight:700;background:#f5f3ff;color:#5b21b6;border:1px solid #c4b5fd">
+             🏅 ${msmeVal.replace(' Enterprise','')}
+           </span>
+           ${v.msmeId ? `<div style="font-size:10.5px;color:#7c3aed;margin-top:2px;font-family:'DM Mono',monospace">${v.msmeId}</div>` : ''}
+         </div>`
+      : `<span style="color:var(--text-3);font-size:12px">—</span>`;
+
     return `<tr>
       <td><code style="font-family:'DM Mono',monospace;font-size:12px;color:var(--primary)">${v.id}</code></td>
       <td>${svcCode}</td>
       <td>
         <b>${v.name}</b>
         ${!isReg ? `<span style="font-size:10px;background:#fef3c7;color:#92400e;padding:1px 6px;border-radius:4px;margin-left:6px;font-weight:600">RCM</span>` : ''}
+        ${isMSME ? `<span style="font-size:10px;background:#f5f3ff;color:#7c3aed;padding:1px 6px;border-radius:4px;margin-left:4px;font-weight:600">MSME</span>` : ''}
       </td>
       <td><span style="font-size:12.5px">${v.type}</span></td>
       <td>${regBadge}${rcmNote}</td>
       <td><code style="font-family:'DM Mono',monospace;font-size:12px;color:var(--text-2)">${v.gstin || '—'}</code></td>
+      <td>${msmeBadge}</td>
       <td style="font-size:13px">${v.category}</td>
       <td><span class="badge ${statusBadge[v.status]||'badge-draft'}">${v.status}</span></td>
       <td style="color:var(--text-3);font-size:12.5px">${v.date}</td>
       <td><button class="btn btn-secondary btn-sm" onclick="event.stopPropagation()">Edit</button></td>
     </tr>`;
-  }).join('') || `<tr><td colspan="10" style="text-align:center;padding:30px;color:var(--text-3)">No vendors found</td></tr>`;
+  }).join('') || `<tr><td colspan="11" style="text-align:center;padding:30px;color:var(--text-3)">No vendors found</td></tr>`;
 }
 
 function showVendorForm() {
@@ -4175,6 +4318,17 @@ function showVendorForm() {
    'v-account','v-ifsc','v-contact','v-email','v-phone','v-project'].forEach(id => {
     const el = document.getElementById(id); if (el) el.value = '';
   });
+  // Reset MSME fields
+  const msmeEl = document.getElementById('v-msme');
+  if(msmeEl) msmeEl.value = 'Not Applicable';
+  const msmeTypeEl = document.getElementById('v-msme-type');
+  if(msmeTypeEl) msmeTypeEl.value = '';
+  const msmeIdEl = document.getElementById('v-msme-id');
+  if(msmeIdEl) msmeIdEl.value = '';
+  const msmeDetailsGrp = document.getElementById('v-msme-details-grp');
+  if(msmeDetailsGrp) msmeDetailsGrp.style.display = 'none';
+  const msmeIdHint = document.getElementById('v-msme-id-hint');
+  if(msmeIdHint) { msmeIdHint.textContent = 'Format: UDYAM-XX-00-0000000'; msmeIdHint.style.color = ''; }
   // Reset sub vendor code panel
   resetSVCPanel();
   document.getElementById('vendor-modal').style.display = 'flex';
@@ -4222,6 +4376,34 @@ function setVendorReg(reg) {
     }
   }
 
+  // ── If GST Registered → force Domestic, hide International option ──
+  const iLbl = document.getElementById('geo-intl-lbl');
+  if (isReg) {
+    // Force back to domestic
+    currentVendorGeo = 'domestic';
+    const domesticRadio = document.querySelector('input[name="vendor-type"][value="domestic"]');
+    if (domesticRadio) domesticRadio.checked = true;
+    // Hide International option with tooltip
+    if (iLbl) {
+      iLbl.style.display = 'none';
+    }
+    // Show info note if not already there
+    let geoNote = document.getElementById('v-geo-gst-note');
+    if (!geoNote) {
+      geoNote = document.createElement('div');
+      geoNote.id = 'v-geo-gst-note';
+      geoNote.style.cssText = 'font-size:12px;color:#1d4ed8;background:#eff6ff;padding:6px 10px;border-radius:6px;border:1px solid #bfdbfe;margin-top:-10px;margin-bottom:10px';
+      geoNote.innerHTML = 'ℹ️ GST Registered vendors are domestic. International option is not applicable.';
+      iLbl?.parentNode?.insertBefore(geoNote, iLbl.nextSibling) || document.getElementById('geo-domestic-lbl')?.parentNode?.appendChild(geoNote);
+    }
+    geoNote.style.display = 'block';
+  } else {
+    // Unregistered — show International option again
+    if (iLbl) iLbl.style.display = '';
+    const geoNote = document.getElementById('v-geo-gst-note');
+    if (geoNote) geoNote.style.display = 'none';
+  }
+
   // Show/hide conditional fields
   document.getElementById('v-gstin-grp').style.display        = isReg ? 'flex' : 'none';
   document.getElementById('v-pan-grp').style.display          = isReg ? 'flex' : 'none';
@@ -4229,7 +4411,43 @@ function setVendorReg(reg) {
   document.getElementById('v-unreg-reason-grp').style.display = isReg ? 'none' : 'flex';
   document.getElementById('v-composition-grp').style.display  = isReg ? 'none' : 'flex';
 
+  // Re-run geography toggle to keep field visibility in sync
+  toggleVendorType(currentVendorGeo);
   updateDocChecklist();
+}
+
+/* ---- MSME Details toggle ---- */
+function toggleMSMEDetails(val) {
+  const grp = document.getElementById('v-msme-details-grp');
+  if (!grp) return;
+  const isRegistered = val && val !== 'Not Applicable';
+  grp.style.display = isRegistered ? 'block' : 'none';
+  // Clear fields when hiding
+  if (!isRegistered) {
+    const typeEl = document.getElementById('v-msme-type');
+    const idEl   = document.getElementById('v-msme-id');
+    if (typeEl) typeEl.value = '';
+    if (idEl)   idEl.value = '';
+  }
+}
+
+function validateMSMEId(input) {
+  const val     = input.value.trim();
+  const hintEl  = document.getElementById('v-msme-id-hint');
+  // Udyam format: UDYAM-XX-00-0000000 (19 chars)
+  const isValid = /^UDYAM-[A-Z]{2}-\d{2}-\d{7}$/.test(val);
+  if (val.length === 0) {
+    if (hintEl) { hintEl.textContent = 'Format: UDYAM-XX-00-0000000'; hintEl.style.color = ''; }
+    input.style.borderColor = '';
+    return;
+  }
+  if (isValid) {
+    if (hintEl) { hintEl.textContent = '✅ Valid Udyam Registration Number'; hintEl.style.color = 'var(--success)'; }
+    input.style.borderColor = 'var(--success)';
+  } else {
+    if (hintEl) { hintEl.textContent = '❌ Format should be UDYAM-MH-27-0012345'; hintEl.style.color = 'var(--danger)'; }
+    input.style.borderColor = 'var(--danger)';
+  }
 }
 
 /* ---- Geography toggle ---- */
@@ -4315,6 +4533,23 @@ function submitVendor() {
     if(!reason){ toast('Please select the reason for non-registration','error'); return; }
   }
 
+  // ── MSME mandatory validation for domestic vendors ──────────────────
+  if(!isIntl) {
+    const msmeVal = document.getElementById('v-msme')?.value || '';
+    if(!msmeVal || msmeVal === '') {
+      toast('MSME Status is required for domestic vendors','error'); return;
+    }
+    if(msmeVal !== 'Not Applicable') {
+      const msmeType = document.getElementById('v-msme-type')?.value?.trim() || '';
+      const msmeId   = document.getElementById('v-msme-id')?.value?.trim() || '';
+      if(!msmeType) { toast('MSME Type is required for MSME-registered vendors','error'); return; }
+      if(!msmeId)   { toast('MSME / Udyam Registration Number is required','error'); return; }
+      if(!/^UDYAM-[A-Z]{2}-\d{2}-\d{7}$/.test(msmeId)) {
+        toast('Invalid Udyam Registration Number — format: UDYAM-MH-27-0012345','error'); return;
+      }
+    }
+  }
+
   // Validate manual SVC if that tab is active
   if(currentSVCTab === 'manual') {
     const manVal = document.getElementById('svc-manual-input')?.value.trim() || '';
@@ -4322,30 +4557,32 @@ function submitVendor() {
     if(!validateSVCManual(document.getElementById('svc-manual-input'))){ toast('Sub Vendor Code is invalid — please fix and retry','error'); return; }
   }
 
+  const msmeStatus = !isIntl ? (document.getElementById('v-msme')?.value || 'Not Applicable') : 'N/A';
+  const msmeType   = (msmeStatus !== 'Not Applicable' && msmeStatus !== 'N/A') ? (document.getElementById('v-msme-type')?.value || '') : '';
+  const msmeId     = (msmeStatus !== 'Not Applicable' && msmeStatus !== 'N/A') ? (document.getElementById('v-msme-id')?.value?.trim() || '') : '';
+
   const subVendorCode = getAssignedSVC();
   const id = 'V-00'+(db.vendors.length+1);
   const newVendor = {
-    id,
-    name,
-    subVendorCode,
+    id, name, subVendorCode,
     type: isIntl ? 'International' : 'Domestic',
     registration: isReg ? 'Registered' : 'Unregistered',
     gstin: isReg && !isIntl ? document.getElementById('v-gstin').value.trim() : isIntl ? (document.getElementById('v-taxid')?.value||'N/A') : 'N/A',
     pan: isReg && !isIntl ? document.getElementById('v-pan').value.trim() : !isIntl && !isReg ? document.getElementById('v-pan-unreg').value.trim() : 'N/A',
-    category: 'General',
-    status: 'Pending',
+    msme: msmeStatus, msmeType, msmeId,
+    category: 'General', status: 'Pending',
     date: new Date().toISOString().slice(0,10),
   };
   db.vendors.push(newVendor);
   db.auditLog.unshift({
     ts: new Date().toLocaleString(), event:'Create', entity:'Vendor', entityId:id,
     actor: document.getElementById('user-name-sidebar').textContent, role: currentRole,
-    detail: `${isReg?'Registered':'Unregistered'} vendor ${name} onboarded — Code: ${subVendorCode||'N/A'}`,
+    detail: `${isReg?'Registered':'Unregistered'} vendor ${name} onboarded — Code: ${subVendorCode||'N/A'}${msmeId ? ' | MSME: '+msmeId : ''}`,
   });
   closeVendorModal();
   renderVendors('', '', '', '');
   updateVendorKPIs();
-  toast(`Vendor onboarded — Sub Vendor Code: ${subVendorCode || 'Not assigned'}${!isReg?' — Finance notified of RCM applicability':''}`);
+  toast(`Vendor onboarded — Sub Vendor Code: ${subVendorCode || 'Not assigned'}${msmeStatus && msmeStatus !== 'Not Applicable' ? ' | MSME: '+msmeStatus : ''}${!isReg?' — Finance notified of RCM applicability':''}`);
 }
 
 // ===== SUB VENDOR CODE =====
@@ -4505,8 +4742,16 @@ function renderPRs(statusFilter='', search='', deptFilter='', priorityFilter='')
 
   const tbody = document.getElementById('pr-table-body');
   tbody.innerHTML = list.map(r=>{
+    const sym       = r.currencySymbol || '₹';
+    const code      = r.currency || 'INR';
+    const curr      = CURRENCIES.find(c => c.code === code) || CURRENCIES[0];
     const totBudget = r.items ? r.items.reduce((a,i)=>a+(i.qty*i.rate),0) : r.budget;
-    const budgetDisp = totBudget ? '₹'+totBudget.toLocaleString('en-IN') : r.budget ? '₹'+Number(r.budget).toLocaleString('en-IN') : '—';
+    const budgetAmt = totBudget || Number(r.budget) || 0;
+    const budgetDisp = budgetAmt ? `${sym}${budgetAmt.toLocaleString('en-IN')}` : '—';
+    const inrDisp    = (code !== 'INR' && r.budgetINR) ? `<div style="font-size:11px;color:var(--text-3);margin-top:2px">≈ ₹${Number(r.budgetINR).toLocaleString('en-IN')} INR</div>` : '';
+    const currBadge  = `<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:12px;font-size:11.5px;font-weight:700;background:${code==='INR'?'#f0fdf4':'#fffbeb'};color:${code==='INR'?'#065f46':'#92400e'};border:1px solid ${code==='INR'?'#bbf7d0':'#fde68a'}">
+      ${curr.flag} ${code}
+    </span>`;
     return `<tr onclick="viewPR('${r.id}')" style="cursor:pointer">
       <td><code style="font-family:'DM Mono',monospace;font-size:12px;color:var(--primary)">${r.id}</code></td>
       <td><b>${r.title}</b></td>
@@ -4514,7 +4759,8 @@ function renderPRs(statusFilter='', search='', deptFilter='', priorityFilter='')
       <td>${r.dept}</td>
       <td style="font-size:12.5px;color:var(--text-2)">${r.category}</td>
       <td><span style="padding:3px 10px;border-radius:20px;font-size:12px;font-weight:700;${PRIORITY_STYLE[r.priority]||''}">${r.priority}</span></td>
-      <td style="font-family:'DM Mono',monospace;font-size:13px">${budgetDisp}</td>
+      <td>${currBadge}</td>
+      <td style="font-family:'DM Mono',monospace;font-size:13px">${budgetDisp}${inrDisp}</td>
       <td><span class="badge ${PR_STATUS_BADGE[r.status]||'badge-draft'}">${r.status}</span></td>
       <td>${r.linkedPO
         ? `<code style="font-family:'DM Mono',monospace;font-size:11.5px;color:var(--primary);cursor:pointer" onclick="event.stopPropagation();viewPO('${r.linkedPO}')">${r.linkedPO}</code>`
@@ -4528,7 +4774,7 @@ function renderPRs(statusFilter='', search='', deptFilter='', priorityFilter='')
           ? `<button class="btn btn-success btn-sm" style="margin-left:4px" onclick="event.stopPropagation();approvePR('${r.id}')">✅ Approve</button>`:''}
       </td>
     </tr>`;
-  }).join('') || `<tr><td colspan="11" style="text-align:center;padding:30px;color:var(--text-3)">No requisitions found</td></tr>`;
+  }).join('') || `<tr><td colspan="12" style="text-align:center;padding:30px;color:var(--text-3)">No requisitions found</td></tr>`;
 }
 
 function filterPRs(status='', search='', dept='', priority=''){
@@ -4671,6 +4917,8 @@ function convertPRtoPO(prId) {
 /* ---- PR Create Form ---- */
 function showPRForm() {
   db.prItems = [{desc:'',qty:1,uom:'Nos',rate:0,notes:''}];
+  db.prCurrencyCode   = 'INR';
+  db.prCurrencySymbol = '₹';
   document.getElementById('pr-title').value       = '';
   document.getElementById('pr-dept').value        = '';
   document.getElementById('pr-category').value    = '';
@@ -4680,6 +4928,9 @@ function showPRForm() {
   document.getElementById('pr-project').value     = '';
   document.getElementById('pr-justification').value = '';
   document.getElementById('pr-required-by').value = '';
+  document.getElementById('pr-currency').value    = 'INR';
+  renderPRCurrencyChips('INR');
+  onPRCurrencyChange('INR');
   renderPRItemsTable();
   document.getElementById('pr-modal').style.display = 'flex';
 }
@@ -4689,9 +4940,17 @@ function closePRModal(e){
 }
 
 function renderPRItemsTable(){
+  const sym   = db.prCurrencySymbol || '₹';
+  const code  = db.prCurrencyCode   || 'INR';
   const uoms=['Nos','Pcs','Kg','L','m','Box','Set','Hour','Day','Month','Ream','Lot','Lump Sum'];
   const tbody = document.getElementById('pr-items-body');
   const foot  = document.getElementById('pr-items-foot');
+  // Update column headers
+  const rateHdr  = document.getElementById('pr-rate-header');
+  const totalHdr = document.getElementById('pr-total-header');
+  if(rateHdr)  rateHdr.textContent  = `Est. Unit Rate (${sym})`;
+  if(totalHdr) totalHdr.textContent = `Est. Total (${sym})`;
+
   tbody.innerHTML = db.prItems.map((item,i)=>{
     const tot = item.qty * item.rate;
     return `<tr>
@@ -4700,7 +4959,7 @@ function renderPRItemsTable(){
       <td><input type="number" value="${item.qty}" min="1" style="width:60px;border:1.5px solid var(--border);border-radius:6px;padding:4px 7px;font-size:13px" oninput="db.prItems[${i}].qty=+this.value;renderPRItemsTable()"/></td>
       <td><select style="border:1.5px solid var(--border);border-radius:6px;padding:4px 6px;font-size:13px" onchange="db.prItems[${i}].uom=this.value">${uoms.map(u=>`<option ${u===item.uom?'selected':''}>${u}</option>`).join('')}</select></td>
       <td><input type="number" value="${item.rate}" min="0" style="width:100px;border:1.5px solid var(--border);border-radius:6px;padding:4px 7px;font-size:13px" oninput="db.prItems[${i}].rate=+this.value;renderPRItemsTable()"/></td>
-      <td class="calc">₹${tot.toLocaleString('en-IN')}</td>
+      <td class="calc">${sym}${tot.toLocaleString('en-IN')}</td>
       <td><input value="${item.notes||''}" placeholder="Spec / notes" oninput="db.prItems[${i}].notes=this.value" style="width:100%;border:1.5px solid var(--border);border-radius:6px;padding:4px 7px;font-size:12px"/></td>
       <td><button onclick="removePRItem(${i})" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:16px;padding:4px">×</button></td>
     </tr>`;
@@ -4708,12 +4967,95 @@ function renderPRItemsTable(){
   const grandTotal = db.prItems.reduce((a,i)=>a+(i.qty*i.rate),0);
   foot.innerHTML = `<tr style="background:var(--surface);font-weight:700">
     <td colspan="5" style="padding:8px 10px;text-align:right;color:var(--text-2)">Estimated Total</td>
-    <td class="calc" style="font-weight:700;color:var(--primary)">₹${grandTotal.toLocaleString('en-IN')}</td>
+    <td class="calc" style="font-weight:700;color:var(--primary)">${sym}${grandTotal.toLocaleString('en-IN')}</td>
     <td></td><td></td>
   </tr>`;
+  recalcPRCurrencyTotal();
 }
 function addPRItem(){db.prItems.push({desc:'',qty:1,uom:'Nos',rate:0,notes:''});renderPRItemsTable();}
 function removePRItem(i){if(db.prItems.length>1){db.prItems.splice(i,1);renderPRItemsTable();}}
+
+// ===== PR CURRENCY =====
+function renderPRCurrencyChips(selected='INR') {
+  const container = document.getElementById('pr-currency-chips');
+  if(!container) return;
+  container.innerHTML = CURRENCIES.map(c => {
+    const active = c.code === selected;
+    return `<div onclick="pickPRCurrency('${c.code}')" style="
+      display:inline-flex;align-items:center;gap:5px;
+      padding:5px 10px;border-radius:8px;cursor:pointer;
+      border:1.5px solid ${active ? 'var(--primary)' : 'var(--border)'};
+      background:${active ? 'var(--primary-light)' : '#fff'};
+      font-size:12px;font-weight:${active ? '700' : '500'};
+      color:${active ? 'var(--primary)' : 'var(--text-2)'};
+      transition:all 0.12s;user-select:none
+    ">
+      <span style="font-size:14px">${c.flag}</span>
+      <span>${c.code}</span>
+      ${active ? '<span style="font-size:10px;opacity:0.7">✓</span>' : ''}
+    </div>`;
+  }).join('');
+}
+
+function pickPRCurrency(code) {
+  const sel = document.getElementById('pr-currency');
+  if(sel) sel.value = code;
+  onPRCurrencyChange(code);
+}
+
+function onPRCurrencyChange(code) {
+  const isForeign = code !== 'INR';
+  const curr = CURRENCIES.find(c => c.code === code) || CURRENCIES[0];
+
+  db.prCurrencyCode   = code;
+  db.prCurrencySymbol = curr.symbol;
+
+  renderPRCurrencyChips(code);
+
+  // Update budget symbol badge
+  const symEl = document.getElementById('pr-budget-symbol');
+  if(symEl) {
+    symEl.textContent    = `${curr.symbol} ${code}`;
+    symEl.style.color    = isForeign ? '#92400e' : 'var(--primary)';
+    symEl.style.background = isForeign ? '#fffbeb' : 'var(--primary-light)';
+    symEl.style.borderColor = isForeign ? '#fde68a' : 'var(--primary)';
+  }
+
+  // Show/hide FX panel
+  const fxPanel   = document.getElementById('pr-fx-panel');
+  const inrNotice = document.getElementById('pr-inr-notice');
+  if(fxPanel)   fxPanel.style.display   = isForeign ? 'block' : 'none';
+  if(inrNotice) inrNotice.style.display = isForeign ? 'none'  : 'flex';
+
+  if(isForeign) {
+    const rate = FX_DEFAULTS[code] || 1;
+    const flagEl  = document.getElementById('pr-fx-flag');
+    const labelEl = document.getElementById('pr-fx-label');
+    const rateEl  = document.getElementById('pr-fx-rate');
+    const indicEl = document.getElementById('pr-fx-indicative');
+    const noticeEl= document.getElementById('pr-fx-cur-notice');
+    if(flagEl)   flagEl.textContent   = curr.flag;
+    if(labelEl)  labelEl.textContent  = `Exchange Rate (1 ${code} = ₹ INR)`;
+    if(rateEl)  { rateEl.value = rate; }
+    if(indicEl)  indicEl.textContent  = `1 ${code} ≈ ₹${rate.toLocaleString('en-IN')}`;
+    if(noticeEl) noticeEl.textContent = code;
+  }
+
+  renderPRItemsTable();
+}
+
+function recalcPRCurrencyTotal() {
+  const code = db.prCurrencyCode || 'INR';
+  if(code === 'INR') { const el=document.getElementById('pr-inr-equiv'); if(el) el.textContent=''; return; }
+  const rate     = parseFloat(document.getElementById('pr-fx-rate')?.value) || 0;
+  const sym      = db.prCurrencySymbol || '$';
+  const budget   = parseFloat(document.getElementById('pr-budget')?.value) || 0;
+  const lineTotal= db.prItems.reduce((a,i) => a + (i.qty * i.rate), 0);
+  const total    = lineTotal || budget;
+  const inrVal   = total * rate;
+  const el = document.getElementById('pr-inr-equiv');
+  if(el) el.textContent = `₹${Math.round(inrVal).toLocaleString('en-IN')}`;
+}
 
 function buildPRFromForm(status){
   const title = document.getElementById('pr-title').value.trim();
@@ -4721,6 +5063,8 @@ function buildPRFromForm(status){
   if(!title){toast('Please enter a requisition title','error');return null;}
   if(!dept) {toast('Please select a department','error');return null;}
   const id = 'PR-2026-00'+(db.prs.length+1);
+  const currCode = db.prCurrencyCode || 'INR';
+  const fxRate   = currCode !== 'INR' ? (parseFloat(document.getElementById('pr-fx-rate')?.value)||0) : 1;
   return {
     id, title,
     requester: document.getElementById('user-name-sidebar').textContent,
@@ -4728,6 +5072,10 @@ function buildPRFromForm(status){
     category:    document.getElementById('pr-category').value||'Other',
     priority:    document.getElementById('pr-priority').value,
     budget:      Number(document.getElementById('pr-budget').value)||0,
+    currency:    currCode,
+    currencySymbol: db.prCurrencySymbol || '₹',
+    fxRate,
+    budgetINR:   currCode !== 'INR' ? Math.round((Number(document.getElementById('pr-budget').value)||0) * fxRate) : (Number(document.getElementById('pr-budget').value)||0),
     vendor:      document.getElementById('pr-vendor').value,
     project:     document.getElementById('pr-project').value,
     justification: document.getElementById('pr-justification').value,
@@ -4883,7 +5231,7 @@ function submitDraftPO(id){
 
 // ===== CREATE PO =====
 function initCreatePO() {
-  db.lineItems=[{desc:'',qty:1,uom:'Pcs',code:'',gst:18,rate:0}];
+  db.lineItems=[{desc:'',qty:1,uom:'Pcs',code:'',gst:18,rate:0,startDate:'',endDate:'',renewalDate:''}];
   db.lineItemType='goods';
   db.currencyCode   = 'INR';
   db.currencySymbol = '₹';
@@ -5080,42 +5428,76 @@ let currentInvFreq = null;
 let invMilestones  = [{desc:'Delivery', pct:50, date:''}, {desc:'Acceptance', pct:50, date:''}];
 
 function initInvoicingPanel() {
+  // Reset dropdown appearance
+  const sel = document.getElementById('inv-freq-select');
+  const badge = document.getElementById('inv-freq-badge');
+  const bar   = document.getElementById('inv-summary-bar');
+  const hint  = document.getElementById('inv-freq-hint');
+
   // Load saved settings if vendor has them
   const sysId = document.getElementById('vc-subcode-sysid')?.textContent;
   const vendor = db.vendors.find(v => v.id === sysId);
+
   if(vendor?.invoicingFreq) {
     selectInvoicingFreq(vendor.invoicingFreq, false);
   } else {
-    // Reset to empty state
-    if(currentInvFreq) selectInvoicingFreq(currentInvFreq, false);
+    // Reset to blank
+    if(sel) { sel.value = ''; sel.style.borderColor = ''; sel.style.color = ''; sel.style.fontWeight = ''; }
+    if(badge) badge.style.display = 'none';
+    if(bar)   bar.style.display   = 'none';
+    if(hint)  hint.textContent    = 'Select how often the vendor should raise invoices against this PO';
+    ['monthly','halfyearly','quarterly','yearly','milestone','other'].forEach(f => {
+      const p = document.getElementById('inv-detail-'+f);
+      if(p) p.style.display = 'none';
+    });
+    currentInvFreq = null;
   }
 }
 
 const INV_FREQ_META = {
-  monthly:   { icon:'📅', label:'Monthly',   color:'#1d4ed8', bg:'#dbeafe' },
-  quarterly: { icon:'🗓️', label:'Quarterly', color:'#7c3aed', bg:'#ede9fe' },
-  yearly:    { icon:'📆', label:'Yearly',     color:'#065f46', bg:'#d1fae5' },
-  milestone: { icon:'🏁', label:'Milestone',  color:'#b45309', bg:'#fef3c7' },
-  other:     { icon:'⚙️', label:'Custom',     color:'#475569', bg:'#f1f5f9' },
+  monthly:    { icon:'📅', label:'Monthly',     color:'#1d4ed8', bg:'#dbeafe',  hint:'Vendor raises invoice on the selected day every calendar month' },
+  halfyearly: { icon:'📆', label:'Half Yearly', color:'#0891b2', bg:'#e0f2fe',  hint:'Vendor raises invoice twice per year — once per half' },
+  quarterly:  { icon:'🗓️', label:'Quarterly',  color:'#7c3aed', bg:'#ede9fe',  hint:'Vendor raises invoice at the end of each quarter' },
+  yearly:     { icon:'📆', label:'Yearly',      color:'#065f46', bg:'#d1fae5',  hint:'Single annual invoice — advance or arrears as configured' },
+  milestone:  { icon:'🏁', label:'Milestone',   color:'#b45309', bg:'#fef3c7',  hint:'Invoice triggered on completion of each defined milestone' },
+  other:      { icon:'⚙️', label:'Custom',      color:'#475569', bg:'#f1f5f9',  hint:'Custom invoicing schedule as agreed with vendor' },
 };
 
 function selectInvoicingFreq(freq, animate=true) {
+  if(!freq) return;
   currentInvFreq = freq;
 
-  // Update card styles
-  ['monthly','quarterly','yearly','milestone','other'].forEach(f => {
-    const card = document.getElementById('ifc-'+f);
-    if(!card) return;
-    const isActive = f === freq;
-    const meta = INV_FREQ_META[f];
-    card.style.borderColor  = isActive ? meta.color : 'var(--border)';
-    card.style.background   = isActive ? meta.bg    : 'var(--surface)';
-    const title = card.querySelector('div:nth-child(2)');
-    if(title) title.style.color = isActive ? meta.color : 'var(--text)';
-  });
+  // Sync dropdown if called programmatically
+  const sel = document.getElementById('inv-freq-select');
+  if(sel && sel.value !== freq) sel.value = freq;
+
+  // Update dropdown border color to show selection
+  if(sel) {
+    const meta = INV_FREQ_META[freq];
+    sel.style.borderColor   = meta?.color || 'var(--primary)';
+    sel.style.color         = meta?.color || 'var(--text)';
+    sel.style.fontWeight    = '700';
+  }
+
+  // Update the frequency badge next to dropdown
+  const badge = document.getElementById('inv-freq-badge');
+  if(badge && INV_FREQ_META[freq]) {
+    const meta = INV_FREQ_META[freq];
+    badge.style.display     = 'flex';
+    badge.style.alignItems  = 'center';
+    badge.style.gap         = '6px';
+    badge.style.background  = meta.bg;
+    badge.style.color       = meta.color;
+    badge.style.border      = `1.5px solid ${meta.color}`;
+    badge.innerHTML         = `${meta.icon} ${meta.label}`;
+  }
+
+  // Update hint text
+  const hint = document.getElementById('inv-freq-hint');
+  if(hint) hint.textContent = INV_FREQ_META[freq]?.hint || '';
 
   // Show matching detail panel, hide others
-  ['monthly','quarterly','yearly','milestone','other'].forEach(f => {
+  ['monthly','halfyearly','quarterly','yearly','milestone','other'].forEach(f => {
     const panel = document.getElementById('inv-detail-'+f);
     if(panel) panel.style.display = f===freq ? 'block' : 'none';
   });
@@ -5195,6 +5577,14 @@ function saveInvoicingSettings() {
         due:      document.getElementById('inv-monthly-due')?.value,
         start:    document.getElementById('inv-monthly-start')?.value,
         reminder: document.getElementById('inv-monthly-reminder')?.value,
+      }; break;
+    case 'halfyearly':
+      detail = {
+        start:  document.getElementById('inv-halfyearly-start')?.value,
+        timing: document.getElementById('inv-halfyearly-timing')?.value,
+        due:    document.getElementById('inv-halfyearly-due')?.value,
+        fy:     document.getElementById('inv-halfyearly-fy')?.value,
+        notes:  document.getElementById('inv-halfyearly-notes')?.value,
       }; break;
     case 'quarterly':
       detail = {
@@ -5488,7 +5878,7 @@ function renderLineItems() {
     <th>Qty *</th>
     <th>UOM *</th>
     <th>${isGoods ? 'HSN' : 'SAC'} *</th>
-    ${isGoods ? '' : '<th>Start Date</th><th>End Date</th>'}
+    ${isGoods ? '' : '<th>Start Date</th><th>End Date</th><th style="white-space:nowrap;color:#0891b2">Renewal Date</th>'}
     ${taxCols}
     <th>Unit Rate (${sym}) *</th>
     <th>Subtotal</th>
@@ -5581,7 +5971,11 @@ function renderLineItems() {
       <td><input type="number" value="${li.qty}" min="1" style="width:60px" oninput="db.lineItems[${i}].qty=+this.value;renderLineItems()"/></td>
       <td><select onchange="db.lineItems[${i}].uom=this.value">${uoms.map(u=>`<option ${u===li.uom?'selected':''}>${u}</option>`).join('')}</select></td>
       <td><input value="${li.code||''}" placeholder="${isGoods?'HSN':'SAC'}" oninput="db.lineItems[${i}].code=this.value" style="width:80px"/></td>
-      ${isGoods ? '' : '<td><input type="date" style="width:120px"/></td><td><input type="date" style="width:120px"/></td>'}
+      ${isGoods ? '' : `
+        <td><input type="date" value="${li.startDate||''}" style="width:120px;border:none;background:transparent;padding:4px 6px;font-size:13px;outline:none" oninput="db.lineItems[${i}].startDate=this.value;validateServiceDates(${i})" onfocus="this.style.background='var(--primary-light)'" onblur="this.style.background='transparent'"/></td>
+        <td><input type="date" value="${li.endDate||''}" style="width:120px;border:none;background:transparent;padding:4px 6px;font-size:13px;outline:none" oninput="db.lineItems[${i}].endDate=this.value;validateServiceDates(${i})" onfocus="this.style.background='var(--primary-light)'" onblur="this.style.background='transparent'"/></td>
+        <td style="background:#f0f9ff"><input type="date" value="${li.renewalDate||''}" style="width:120px;border:none;background:transparent;padding:4px 6px;font-size:13px;outline:none;color:#0891b2;font-weight:600" oninput="db.lineItems[${i}].renewalDate=this.value" onfocus="this.style.background='#e0f2fe'" onblur="this.style.background='transparent'" title="Renewal Date — date on which this service line auto-renews or requires review"/></td>
+      `}
       ${taxCells}
       <td><input type="number" value="${li.rate}" min="0" style="width:100px" oninput="db.lineItems[${i}].rate=+this.value;renderLineItems()"/></td>
       <td class="calc">${sym}${sub.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
@@ -5596,7 +5990,7 @@ function renderLineItems() {
   const totTotal = totSub + totTax;
   const allNilRated = db.lineItems.every(li => (li.gst || 0) === 0);
   // col span = fixed cols + tax cols
-  const fixedCols = isGoods ? 5 : 7; // #, desc, qty, uom, hsn/sac [+start,end]
+  const fixedCols = isGoods ? 5 : 8; // #, desc, qty, uom, sac, start, end, renewal
   const taxExtraCols = isForeign ? 2 : isSplit ? 3 : 2;
   // subtotal label spans: fixedCols + taxExtraCols
   const subtotalSpan = fixedCols + taxExtraCols;
@@ -5641,7 +6035,7 @@ function renderLineItems() {
 
   recalcCurrencyTotal();
 }
-function addLineItem(){db.lineItems.push({desc:'',qty:1,uom:'Pcs',code:'',gst:18,rate:0});renderLineItems();}
+function addLineItem(){db.lineItems.push({desc:'',qty:1,uom:'Pcs',code:'',gst:18,rate:0,startDate:'',endDate:'',renewalDate:''});renderLineItems();}
 function removeLineItem(i){if(db.lineItems.length>1){db.lineItems.splice(i,1);renderLineItems();}}
 function addExtraApprover(){
   const name=prompt('Enter approver name:');
@@ -5651,12 +6045,40 @@ function addExtraApprover(){
     toast(`${name} added as extra approver`,'info');
   }
 }
+function validateServiceDates(i) {
+  const li = db.lineItems[i];
+  if(!li) return;
+  // Auto-suggest renewal date = end date + 1 year if not already set
+  if(li.endDate && !li.renewalDate) {
+    try {
+      const end = new Date(li.endDate);
+      end.setFullYear(end.getFullYear() + 1);
+      li.renewalDate = end.toISOString().slice(0,10);
+      renderLineItems();
+    } catch(e){}
+  }
+  // Validate start < end
+  if(li.startDate && li.endDate && li.startDate >= li.endDate) {
+    toast('End Date must be after Start Date for line item ' + (i+1), 'error');
+  }
+  // Validate renewal > end
+  if(li.endDate && li.renewalDate && li.renewalDate <= li.endDate) {
+    toast('Renewal Date must be after End Date for line item ' + (i+1), 'error');
+  }
+}
+
 function savePODraft(){
   const title=document.getElementById('po-title').value||'Untitled PO';
   const vendor=document.getElementById('po-vendor').value||'TBD';
   const id='PO-2026-00'+(48+db.pos.length);
   const totTotal=db.lineItems.reduce((a,li)=>a+(li.qty*li.rate*(1+li.gst/100)),0);
-  db.pos.unshift({id,title,vendor,dept:'Engineering',type:'Direct PO',amount:Math.round(totTotal/1.18),gst:Math.round(totTotal*0.18/1.18),total:Math.round(totTotal),status:'Draft',created:new Date().toISOString().slice(0,10),poType:db.lineItemType});
+  db.pos.unshift({
+    id,title,vendor,dept:'Engineering',type:'Direct PO',
+    amount:Math.round(totTotal/1.18),gst:Math.round(totTotal*0.18/1.18),total:Math.round(totTotal),
+    status:'Draft',created:new Date().toISOString().slice(0,10),
+    poType:db.lineItemType,
+    lineItems: db.lineItems.map(li=>({...li})),
+  });
   db.auditLog.unshift({ts:new Date().toLocaleString(),event:'Create',entity:'Purchase Order',entityId:id,actor:document.getElementById('user-name-sidebar').textContent,role:currentRole,detail:`Draft PO saved: ${title}`});
   toast('PO saved as Draft');
   navigate('purchase-orders');
@@ -5667,9 +6089,27 @@ function submitPO(){
   if(!title){toast('Please enter a PO title','error');return;}
   if(!vendor){toast('Please select a vendor','error');return;}
   if(db.lineItems.every(li=>!li.rate)){toast('Please enter unit rates for line items','error');return;}
+  // Validate service dates
+  if(db.lineItemType==='services') {
+    for(let i=0;i<db.lineItems.length;i++){
+      const li=db.lineItems[i];
+      if(li.startDate && li.endDate && li.startDate >= li.endDate){
+        toast(`Line item ${i+1}: End Date must be after Start Date`,'error'); return;
+      }
+      if(li.endDate && li.renewalDate && li.renewalDate <= li.endDate){
+        toast(`Line item ${i+1}: Renewal Date must be after End Date`,'error'); return;
+      }
+    }
+  }
   const id='PO-2026-00'+(48+db.pos.length);
   const totTotal=db.lineItems.reduce((a,li)=>a+(li.qty*li.rate*(1+li.gst/100)),0);
-  db.pos.unshift({id,title,vendor,dept:'Engineering',type:'Direct PO',amount:Math.round(totTotal/1.18),gst:Math.round(totTotal*0.18/1.18),total:Math.round(totTotal),status:'In Review',created:new Date().toISOString().slice(0,10),poType:db.lineItemType});
+  db.pos.unshift({
+    id,title,vendor,dept:'Engineering',type:'Direct PO',
+    amount:Math.round(totTotal/1.18),gst:Math.round(totTotal*0.18/1.18),total:Math.round(totTotal),
+    status:'In Review',created:new Date().toISOString().slice(0,10),
+    poType:db.lineItemType,
+    lineItems: db.lineItems.map(li=>({...li})),
+  });
   db.auditLog.unshift({ts:new Date().toLocaleString(),event:'Submit',entity:'Purchase Order',entityId:id,actor:document.getElementById('user-name-sidebar').textContent,role:currentRole,detail:`Submitted for approval: ${title}`});
   renderDashboard();
   toast('PO submitted for approval!','success');
